@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行銷團隊營運後台系統與鋰電池市場戰略簡報</title>
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(18, 26, 43, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --primary: #10b981;       /* 翡翠綠 (儲能/完成) */
+      --primary-light: #34d399;
+      --accent: #38bdf8;        /* 科技藍 (後台/互動) */
+      --warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 頂部控制欄 */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: rgba(11, 17, 32, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 100;
+    }
+
+    .brand {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .controls-top {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-download {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #042f2e;
+      font-weight: 700;
+    }
+
+    .btn-download:hover {
+      background: var(--primary-light);
+      color: #042f2e;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+
+    /* 進度條 */
+    .progress-bar-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--primary));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* 簡報主舞台 */
+    main {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 40px;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      width: calc(100% - 80px);
+      max-width: 1200px;
+      height: calc(100% - 30px);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(15px);
+      transition: all 0.35s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* 標題與排版標籤 */
+    .slide-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary-light);
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      width: fit-content;
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 18px;
+      color: #fff;
+    }
+
+    p.subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 900px;
+      margin-bottom: 22px;
+    }
+
+    /* 版面網格 */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      height: calc(100% - 100px);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      height: calc(100% - 100px);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .card-header {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-content {
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* 內嵌互動式展示台（Demo）樣式 */
+    .interactive-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px dashed var(--accent);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    input[type="text"], select, textarea {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    /* 表格樣式 */
+    .table-container {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+    }
+
+    .styled-table th, .styled-table td {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .styled-table th {
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--accent);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-info { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    /* 底部導覽列 */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 28px;
+      background: rgba(11, 17, 32, 0.95);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .slide-counter {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 進度條 -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- 頂部欄位 -->
+  <header>
+    <div class="brand">
+      <span>⚡</span> 行銷團隊三大核心營運系統與鋰電市場戰略
+    </div>
+    <div class="controls-top">
+      <button class="btn" onclick="toggleFullScreen()">⛶ 全螢幕 (F)</button>
+      <button class="btn btn-download" onclick="downloadSelf()">📥 下載本簡報 HTML</button>
+    </div>
+  </header>
+
+  <!-- 簡報主體內容 -->
+  <main>
+
+    <!-- Slide 1: 封面 -->
+    <div class="slide active">
+      <div class="slide-tag">Marketing Ops & Intelligence Platform</div>
+      <h1>行銷團隊營運後台標準化規範<br>與鋰電池市場智能分析系統</h1>
+      <p class="subtitle">整合「白名單授權之每日提醒」、「結構化會議紀錄知識庫」與「鋰電池新興市場情報中心」，具備完整前端填報與後台持久化記錄架構，驅動高敏捷團隊作戰。</p>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-download" style="padding: 10px 22px; font-size: 0.95rem;" onclick="nextSlide()">開始簡報展示 ➔</button>
+      </div>
+    </div>
+
+    <!-- Slide 2: 目錄與架構總覽 -->
+    <div class="slide">
+      <div class="slide-tag">System Architecture</div>
+      <h2>全系統三大支柱與後台資料流架構</h2>
+      <div class="grid-3">
+        <div class="card" onclick="goToSlide(2)" style="cursor: pointer;">
+          <div class="card-header">01. 每人每日提醒事項</div>
+          <div class="card-content">
+            <p><strong>白名單驗證與個人填寫閉環：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li>主管預先配置團隊授權白名單</li>
+              <li>成員每日晨間自行勾選/回報 Top 3</li>
+              <li><strong>後台記錄：</strong>即時留存填報時間戳、出席率與未交提醒</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" onclick="goToSlide(4)" style="cursor: pointer;">
+          <div class="card-header">02. 團隊會議紀錄系統</div>
+          <div class="card-content">
+            <p><strong>高效決策與待辦追蹤中心：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li>議題決策、衝突結論提煉</li>
+              <li>Action Items 唯一負責人與期限</li>
+              <li><strong>後台記錄：</strong>專案標籤、歷史紀錄檢索與進度追蹤</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" onclick="goToSlide(6)" style="cursor: pointer;">
+          <div class="card-header">03. 鋰電池新市場分析</div>
+          <div class="card-content">
+            <p><strong>產業情報與商機報告庫：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li>AI 算力中心 BESS、東南亞兩輪電化</li>
+              <li>歐盟電池法規與工商業微電網</li>
+              <li><strong>後台記錄：</strong>報告歸檔、戰略評估分級與導流追蹤</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: 模組 1 - 白名單每日提醒機制 -->
+    <div class="slide">
+      <div class="slide-tag">Module 1 : Daily Reminders</div>
+      <h2>每日提醒系統架構：白名單控管 ➔ 自行填報 ➔ 後台匯流</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">🔐 白名單機制與前端防護設計</div>
+          <div class="card-content">
+            <p><strong>為什麼需要白名單（Whitelist）？</strong></p>
+            <p>行銷團隊常面臨外包廠商、跨部門兼職人員混雜的情境。透過「主管設定白名單」：</p>
+            <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.8;">
+              <li><strong>權限隔離：</strong>僅限名單內同仁填報關鍵業務指標與預算排程。</li>
+              <li><strong>個人化視圖：</strong>成員選擇自身帳號後，自動載入專屬例行事項（如 Lead 派發、投放檢查）。</li>
+              <li><strong>稽核報表：</strong>後台自動統計「應填未填」名單並於每日 10:30 發出警示。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">📋 後台資料流與儲存規格</div>
+          <div class="card-content">
+            <p><strong>後台即時記錄結構（JSON/DB Payload）：</strong></p>
+            <pre style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; font-size: 0.78rem; color: var(--accent); margin-top: 8px; overflow-x: auto;">
+{
+  "log_id": "REM-20261113-001",
+  "user_name": "Elena (海外行銷)",
+  "timestamp": "2026-11-13 09:15:22",
+  "tasks_completed": ["Leads分發", "社群監測"],
+  "top_priority": "完成東南亞換電櫃型錄英文校對",
+  "status": "Submitted_On_Time"
+}</pre>
+            <p style="margin-top: 10px;">支援整合 Google Sheets API、Notion 知識庫或企業內聯 ERP 資料庫。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: 模組 1 - 實機互動體驗 -->
+    <div class="slide">
+      <div class="slide-tag">Module 1 : Interactive Prototype</div>
+      <h2>【現場體驗】白名單每日回報與後台即時記錄器</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">✍️ 前端回報入口（成員填寫區）</div>
+          <div class="interactive-box">
+            <div class="form-group">
+              <label>1. 選擇白名單授權成員：</label>
+              <select id="userSelect">
+                <option value="Alex (行銷主管)">Alex (行銷主管)</option>
+                <option value="Elena (海外/儲能)">Elena (海外/儲能)</option>
+                <option value="Kevin (展覽/企劃)">Kevin (展覽/企劃)</option>
+                <option value="Sarah (數位投放)">Sarah (數位投放)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>2. 今日核心聚焦任務（Top 1）：</label>
+              <input type="text" id="dailyTaskInput" placeholder="例：完成 Google Ads 預算調整與 B2B 名單確認">
+            </div>
+            <button class="btn btn-download" onclick="submitDailyLog()">送出並寫入後台資料庫 ➔</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">🗄️ 後台即時記錄中心（Admin Log View）</div>
+          <div class="table-container">
+            <table class="styled-table" id="dailyLogTable">
+              <thead>
+                <tr>
+                  <th>時間戳</th>
+                  <th>成員姓名</th>
+                  <th>今日關鍵任務</th>
+                  <th>狀態</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>09:05:12</td>
+                  <td>Elena (海外/儲能)</td>
+                  <td>追蹤歐洲展覽樣品清關與物流進度</td>
+                  <td><span class="badge badge-success">正常送達</span></td>
+                </tr>
+                <tr>
+                  <td>09:20:45</td>
+                  <td>Sarah (數位投放)</td>
+                  <td>檢查碳酸鋰降價議題相關關鍵字 CPC</td>
+                  <td><span class="badge badge-success">正常送達</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: 模組 2 - 會議紀錄架構 -->
+    <div class="slide">
+      <div class="slide-tag">Module 2 : Meeting Minutes Standard</div>
+      <h2>會議紀錄系統架構：拒絕會議遺忘，沉澱高價值資產</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">📐 結構化會議欄位規格</div>
+          <div class="card-content">
+            <ul style="padding-left: 20px; line-height: 1.85;">
+              <li><strong>基本資訊標籤：</strong>會議主題、日期、出席人、專案分類（如動力電池、工商業儲能、展會）。</li>
+              <li><strong>核心決策摘要：</strong>明確記錄討論後的共識，避免無休止的重複討論。</li>
+              <li><strong>行動指派（Action Items）：</strong>嚴格要求「唯一負責人」＋「可交付成果驗收標準」＋「截止時間」。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">📊 後台管理核心能力</div>
+          <div class="card-content">
+            <p><strong>後台提供之管理與回溯功能：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.85;">
+              <li><strong>全文搜尋與標籤過濾：</strong>可依專案名或關鍵字（如「歐盟電池法」）一鍵調閱歷史紀錄。</li>
+              <li><strong>待辦事項看板對接：</strong>自動將紀錄內的 Action Items 拋轉至 Jira、Trello 或 Notion 看板。</li>
+              <li><strong>修改稽核軌跡：</strong>記錄最後編輯人與版本差異，確保數據一致性。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: 模組 2 - 實機互動體驗 -->
+    <div class="slide">
+      <div class="slide-tag">Module 2 : Interactive Prototype</div>
+      <h2>【現場體驗】會議紀錄登錄與後台資料庫檢索</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">📝 新增會議決策紀錄</div>
+          <div class="interactive-box">
+            <div class="form-group">
+              <label>會議主題：</label>
+              <input type="text" id="meetTitle" placeholder="例：Q4 歐洲儲能展宣傳策略對齊會">
+            </div>
+            <div class="form-group">
+              <label>重要決策結論：</label>
+              <input type="text" id="meetDecision" placeholder="例：確定採用液冷櫃作為展出核心視覺亮點">
+            </div>
+            <div class="form-group">
+              <label>待辦事項負責人：</label>
+              <input type="text" id="meetOwner" placeholder="例：Kevin (企劃)">
+            </div>
+            <button class="btn btn-download" onclick="submitMeetingLog()">寫入會議資料庫 ➔</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">🗄️ 會議紀錄後台資料庫</div>
+          <div class="table-container">
+            <table class="styled-table" id="meetLogTable">
+              <thead>
+                <tr>
+                  <th>主題</th>
+                  <th>關鍵結論</th>
+                  <th>負責人</th>
+                  <th>狀態</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>歐盟電池護照法規研商</td>
+                  <td>委託第三方檢驗機構進行碳足跡認證</td>
+                  <td>Elena</td>
+                  <td><span class="badge badge-info">進行中</span></td>
+                </tr>
+                <tr>
+                  <td>AI 資料中心 BESS 方案推廣</td>
+                  <td>完成 4C 快充倍率電芯白皮書初稿</td>
+                  <td>Alex</td>
+                  <td><span class="badge badge-success">已結案</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: 模組 3 - 鋰電池市場深度分析 -->
+    <div class="slide">
+      <div class="slide-tag">Module 3 : Battery Market Intelligence</div>
+      <h2>鋰電池新興市場深層分析：2026 全球趨勢與戰略拐點</h2>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header">🖥️ AI 算力中心 BESS</div>
+          <div class="card-content">
+            <p><strong>超大功率備援市場爆發：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li>科技巨頭因應高能耗算力中心，傳統鉛酸 UPS 全面轉向具備 15 分鐘極限超大放電（3C-5C）的 LFP 鋰電系統。</li>
+              <li>行銷切角：主打<strong>「瞬間散熱效能與 UL9540A 安全認證」</strong>。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">🏭 工商業（C&I）與微電網</div>
+          <div class="card-content">
+            <p><strong>電價機制下的剛性回報：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li>各國高尖峰電費帶動工廠自備儲能（峰谷套利），回本週期縮短至 3.5 年內。</li>
+              <li>行銷切角：開發<strong>「線上 TCO 效益計算器」</strong>，用數據直接說服企業主。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">📜 歐盟法規與出海新區域</div>
+          <div class="card-content">
+            <p><strong>碳關稅與新藍海開闢：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li>歐盟電池法規要求溯源；同時東南亞（越南/印尼）二輪換電櫃成倍數成長。</li>
+              <li>行銷切角：將<strong>「碳足跡透明度」</strong>包裝為外銷歐洲的第一護城河。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: 模組 3 - 市場報告庫互動體驗 -->
+    <div class="slide">
+      <div class="slide-tag">Module 3 : Interactive Prototype</div>
+      <h2>【現場體驗】鋰電市場情報庫登錄與後台檢索中心</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">📊 登錄市場情報 / 競品分析報告</div>
+          <div class="interactive-box">
+            <div class="form-group">
+              <label>報告標題：</label>
+              <input type="text" id="reportTitle" placeholder="例：2026 北美微電網 LFP 儲能櫃需求預測">
+            </div>
+            <div class="form-group">
+              <label>市場分類：</label>
+              <select id="reportCategory">
+                <option value="AI 算力中心儲能">AI 算力中心儲能</option>
+                <option value="工商業 C&I 儲能">工商業 C&I 儲能</option>
+                <option value="東南亞兩輪電氣化">東南亞兩輪電氣化</option>
+                <option value="歐盟電池法規合規">歐盟電池法規合規</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>戰略建議摘要：</label>
+              <input type="text" id="reportSummary" placeholder="例：鎖定加州微電網補貼，聯合當地 SI 系統整合商切入">
+            </div>
+            <button class="btn btn-download" onclick="submitReportLog()">歸檔至情報後台 ➔</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">🗄️ 市場情報庫後台（Intelligence Repository）</div>
+          <div class="table-container">
+            <table class="styled-table" id="reportLogTable">
+              <thead>
+                <tr>
+                  <th>報告主題</th>
+                  <th>市場分類</th>
+                  <th>核心戰略結論</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>印尼兩輪機車換電電芯標準分析</td>
+                  <td>東南亞兩輪電氣化</td>
+                  <td>主攻耐高溫防水防爆規格電芯</td>
+                </tr>
+                <tr>
+                  <td>歐盟電池護照數位申報指引</td>
+                  <td>歐盟電池法規合規</td>
+                  <td>需於 Q3 前完成全生命週期碳審核</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: 總體技術實施藍圖 -->
+    <div class="slide">
+      <div class="slide-tag">Implementation Roadmap</div>
+      <h2>三大系統後台落地技術選型建議</h2>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header">🚀 敏捷輕量方案 (No-Code/低代碼)</div>
+          <div class="card-content">
+            <p><strong>適合 1~2 週內快速上線：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li><strong>前端：</strong>Notion Database 或 Airtable 表單。</li>
+              <li><strong>後台記錄：</strong>直接利用 Airtable 視圖進行權限分流與白名單鎖定。</li>
+              <li><strong>提醒觸發：</strong>串接 Slack / LINE 機器人自動發送未交提醒。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">🏢 企業級專屬方案 (Full-Stack)</div>
+          <div class="card-content">
+            <p><strong>適合長期資產沉澱與資料安全：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li><strong>前端：</strong>Vue / React 單頁應用程式（SPA）。</li>
+              <li><strong>後台資料庫：</strong>PostgreSQL (Supabase) + SSO 企業單一登入白名單驗證。</li>
+              <li><strong>報表大屏：</strong>Grafana 或 PowerBI 視覺化展示全員回報率。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">📈 預期效益與 KPI 衡量</div>
+          <div class="card-content">
+            <p><strong>數位化上線成效指標：</strong></p>
+            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
+              <li><strong>晨間對齊效率提升 40%：</strong>杜絕口頭催收，透過看板一目了然。</li>
+              <li><strong>會議執行落實率達 95%：</strong>後台追蹤每個 Action Item 不遺失。</li>
+              <li><strong>市場情報轉化率提高：</strong>讓鋰電情報及時反哺至廣告與業務宣傳。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: 總結與下載提醒 -->
+    <div class="slide">
+      <div class="slide-tag">Action Now</div>
+      <h1>推動規範上線，賦能行銷全員</h1>
+      <p class="subtitle">將每日提醒的執行紀律、會議決策的追蹤反饋，與外部鋰電市場脈動深度結合，形成行銷團隊高產出閉環。</p>
+      <div class="card" style="max-width: 650px;">
+        <div class="card-header">💾 本簡報檔案隨時離線攜帶</div>
+        <div class="card-content">
+          <p>您剛才在各投影片體驗區填寫的展示紀錄均保存在當前環境中。您可隨時點擊右上角<strong>「📥 下載本簡報 HTML」</strong>按鈕，直接將整份程式碼打包存檔，在任何電腦上直接向主管與團隊展演！</p>
+          <div style="margin-top: 14px;">
+            <button class="btn btn-download" onclick="downloadSelf()">立即下載單一 HTML 簡報檔 📥</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 底部導覽列 -->
+  <footer>
+    <div class="slide-counter" id="slideCounter">1 / 10</div>
+    <div class="nav-buttons">
+      <button class="btn" onclick="prevSlide()">◀ 上一頁</button>
+      <button class="btn btn-download" onclick="nextSlide()">下一頁 ▶</button>
+    </div>
+  </footer>
+
+  <script>
+    // 投影片狀態控制
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    const slideCounter = document.getElementById('slideCounter');
+    let currentSlide = 0;
+    const totalSlides = slides.length;
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === currentSlide);
+      });
+      const progress = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = progress + '%';
+      slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < totalSlides) {
+        currentSlide = index;
+        updateSlide();
+      }
+    }
+
+    // 鍵盤監聽
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+
+    // 全螢幕切換
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // 模組 1：互動體驗邏輯
+    function submitDailyLog() {
+      const user = document.getElementById('userSelect').value;
+      const task = document.getElementById('dailyTaskInput').value.trim();
+      if (!task) {
+        alert('請先輸入今日任務內容！');
+        return;
+      }
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const table = document.getElementById('dailyLogTable').getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow(0);
+      newRow.innerHTML = `<td>${timeStr}</td><td>${user}</td><td>${task}</td><td><span class="badge badge-success">即時寫入</span></td>`;
+      document.getElementById('dailyTaskInput').value = '';
+      alert(`已成功記錄！\n成員：${user}\n任務已寫入後台數據庫。`);
+    }
+
+    // 模組 2：會議紀錄互動邏輯
+    function submitMeetingLog() {
+      const title = document.getElementById('meetTitle').value.trim();
+      const decision = document.getElementById('meetDecision').value.trim();
+      const owner = document.getElementById('meetOwner').value.trim();
+      if (!title || !decision) {
+        alert('請填寫完整會議主題與決策！');
+        return;
+      }
+      const table = document.getElementById('meetLogTable').getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow(0);
+      newRow.innerHTML = `<td>${title}</td><td>${decision}</td><td>${owner || '團隊'}</td><td><span class="badge badge-info">新建立</span></td>`;
+      document.getElementById('meetTitle').value = '';
+      document.getElementById('meetDecision').value = '';
+      document.getElementById('meetOwner').value = '';
+      alert('會議紀錄已成功歸檔至知識庫後台！');
+    }
+
+    // 模組 3：市場報告庫互動邏輯
+    function submitReportLog() {
+      const title = document.getElementById('reportTitle').value.trim();
+      const cat = document.getElementById('reportCategory').value;
+      const sum = document.getElementById('reportSummary').value.trim();
+      if (!title || !sum) {
+        alert('請填寫報告標題與戰略摘要！');
+        return;
+      }
+      const table = document.getElementById('reportLogTable').getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow(0);
+      newRow.innerHTML = `<td>${title}</td><td>${cat}</td><td>${sum}</td>`;
+      document.getElementById('reportTitle').value = '';
+      document.getElementById('reportSummary').value = '';
+      alert('市場分析報告已成功收錄至情報庫！');
+    }
+
+    // 下載自身為完整 HTML 檔案
+    function downloadSelf() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "行銷團隊營運後台與鋰電市場分析簡報.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // 初始化頁面
+    updateSlide();
+  </script>
+</body>
+</html>
