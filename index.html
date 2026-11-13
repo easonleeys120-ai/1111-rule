@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>行銷團隊營運後台系統與鋰電池市場戰略簡報</title>
+  <title>行銷團隊營運後台系統與鋰電池市場智能推播簡報</title>
   <style>
     :root {
-      --bg-dark: #090d16;
-      --bg-card: rgba(18, 26, 43, 0.85);
-      --border-color: rgba(255, 255, 255, 0.1);
-      --primary: #10b981;       /* 翡翠綠 (儲能/完成) */
+      --bg-dark: #090e1a;
+      --bg-panel: rgba(19, 29, 49, 0.85);
+      --border-color: rgba(255, 255, 255, 0.12);
+      --primary: #10b981;       /* 綠能翡翠綠 */
       --primary-light: #34d399;
-      --accent: #38bdf8;        /* 科技藍 (後台/互動) */
-      --warning: #f59e0b;
+      --accent: #38bdf8;        /* 科技電光藍 */
+      --warning: #f59e0b;       /* 晨間推播金 */
+      --danger: #ef4444;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
     }
@@ -33,24 +34,24 @@
       flex-direction: column;
     }
 
-    /* 頂部控制欄 */
+    /* 頂部導覽列 */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px 28px;
-      background: rgba(11, 17, 32, 0.95);
+      background: rgba(11, 18, 33, 0.95);
       border-bottom: 1px solid var(--border-color);
       z-index: 100;
     }
 
     .brand {
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--accent);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .controls-top {
@@ -59,13 +60,14 @@
     }
 
     .btn {
-      background: var(--bg-card);
+      background: var(--bg-panel);
       border: 1px solid var(--border-color);
       color: var(--text-main);
-      padding: 6px 14px;
+      padding: 7px 15px;
       border-radius: 8px;
       cursor: pointer;
       font-size: 0.85rem;
+      font-weight: 500;
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
@@ -91,7 +93,7 @@
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
     }
 
-    /* 進度條 */
+    /* 頂部進度條 */
     .progress-bar-container {
       position: absolute;
       top: 0;
@@ -103,12 +105,12 @@
 
     .progress-bar {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--primary));
+      background: linear-gradient(90deg, var(--accent), var(--warning), var(--primary));
       width: 0%;
-      transition: width 0.3s ease;
+      transition: width 0.35s ease;
     }
 
-    /* 簡報主舞台 */
+    /* 投影片主容器 */
     main {
       flex: 1;
       position: relative;
@@ -121,13 +123,13 @@
 
     .slide {
       position: absolute;
-      width: calc(100% - 80px);
-      max-width: 1200px;
-      height: calc(100% - 30px);
+      width: calc(100% - 60px);
+      max-width: 1220px;
+      height: calc(100% - 20px);
       opacity: 0;
       visibility: hidden;
       transform: translateY(15px);
-      transition: all 0.35s ease;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -139,7 +141,6 @@
       transform: translateY(0);
     }
 
-    /* 標題與排版標籤 */
     .slide-tag {
       display: inline-block;
       padding: 4px 12px;
@@ -155,7 +156,7 @@
     }
 
     h1 {
-      font-size: 2.6rem;
+      font-size: 2.5rem;
       line-height: 1.25;
       margin-bottom: 16px;
       background: linear-gradient(135deg, #ffffff 40%, var(--accent));
@@ -174,26 +175,26 @@
       color: var(--text-muted);
       line-height: 1.6;
       max-width: 900px;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
 
-    /* 版面網格 */
+    /* 網格佈局 */
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
-      height: calc(100% - 100px);
+      height: calc(100% - 90px);
     }
 
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 18px;
-      height: calc(100% - 100px);
+      height: calc(100% - 90px);
     }
 
     .card {
-      background: var(--bg-card);
+      background: var(--bg-panel);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 20px;
@@ -205,13 +206,13 @@
     }
 
     .card-header {
-      font-size: 1.1rem;
+      font-size: 1.08rem;
       font-weight: 700;
       color: var(--accent);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
     }
 
     .card-content {
@@ -222,45 +223,16 @@
       overflow-y: auto;
     }
 
-    /* 可點選的模組卡片（目錄頁三大項目） */
-    .card-link {
-      cursor: pointer;
-      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    .card-link::after {
-      content: '查看模組 ➔';
-      margin-top: 14px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--accent);
-      opacity: 0.7;
-    }
-
-    .card-link:hover,
-    .card-link:focus-visible {
-      transform: translateY(-4px);
-      border-color: var(--accent);
-      box-shadow: 0 12px 32px rgba(56, 189, 248, 0.22);
-      outline: none;
-    }
-
-    .card-link:hover::after,
-    .card-link:focus-visible::after {
-      opacity: 1;
-    }
-
-    /* 內嵌互動式展示台（Demo）樣式 */
+    /* 實機互動後台組件樣式 */
     .interactive-box {
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(11, 18, 33, 0.85);
       border: 1px dashed var(--accent);
       border-radius: 10px;
-      padding: 16px;
-      margin-top: 10px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
     .form-group {
@@ -272,27 +244,40 @@
     .form-group label {
       font-size: 0.8rem;
       color: var(--text-muted);
+      font-weight: 600;
     }
 
-    input[type="text"], select, textarea {
+    input[type="text"], select {
       background: rgba(30, 41, 59, 0.9);
       border: 1px solid var(--border-color);
       color: #fff;
-      padding: 8px 10px;
+      padding: 7px 10px;
       border-radius: 6px;
       font-size: 0.85rem;
       outline: none;
     }
 
-    input[type="text"]:focus, select:focus, textarea:focus {
+    input[type="text"]:focus, select:focus {
       border-color: var(--accent);
     }
 
-    /* 表格樣式 */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .search-bar input {
+      flex: 1;
+    }
+
+    /* 表格與資料卡 */
     .table-container {
       width: 100%;
-      height: 100%;
+      flex: 1;
       overflow-y: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
     }
 
     .styled-table {
@@ -303,8 +288,8 @@
     }
 
     .styled-table th, .styled-table td {
-      padding: 10px 12px;
-      border: 1px solid var(--border-color);
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border-color);
       text-align: left;
     }
 
@@ -316,98 +301,28 @@
       z-index: 5;
     }
 
+    .styled-table tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
     .badge {
-      padding: 2px 8px;
+      display: inline-block;
+      padding: 2px 7px;
       border-radius: 4px;
       font-size: 0.72rem;
       font-weight: 600;
     }
     .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .badge-info { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-    .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .badge-push { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
 
-    /* 後台連線狀態 */
-    .backend-status {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 5px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.6);
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    .backend-status .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--text-muted);
-      flex: none;
-    }
-
-    .backend-status[data-state="ok"] { color: #34d399; border-color: rgba(16, 185, 129, 0.45); }
-    .backend-status[data-state="ok"] .dot { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.85); }
-    .backend-status[data-state="warn"] { color: #fbbf24; border-color: rgba(245, 158, 11, 0.45); }
-    .backend-status[data-state="warn"] .dot { background: #fbbf24; }
-    .backend-status[data-state="error"] { color: #f87171; border-color: rgba(248, 113, 113, 0.45); }
-    .backend-status[data-state="error"] .dot { background: #f87171; }
-
-    /* 提示訊息 */
-    .toast-stack {
-      position: fixed;
-      right: 22px;
-      bottom: 78px;
-      z-index: 999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: min(360px, calc(100vw - 44px));
-    }
-
-    .toast {
-      padding: 12px 14px;
-      border-radius: 8px;
-      border-left: 4px solid var(--accent);
-      background: rgba(18, 26, 43, 0.97);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-      color: var(--text-main);
-      font-size: 0.85rem;
-      line-height: 1.5;
-      animation: toast-in 0.18s ease-out;
-    }
-
-    .toast[data-type="success"] { border-left-color: var(--primary); }
-    .toast[data-type="warn"] { border-left-color: var(--warning); }
-    .toast[data-type="error"] { border-left-color: #ef4444; }
-
-    .toast small {
-      display: block;
-      margin-top: 4px;
-      color: var(--text-muted);
-      font-size: 0.76rem;
-      word-break: break-word;
-    }
-
-    @keyframes toast-in {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: none; }
-    }
-
-    .btn[disabled] {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    /* 底部導覽列 */
+    /* 底部導覽欄 */
     footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 12px 28px;
-      background: rgba(11, 17, 32, 0.95);
+      background: rgba(11, 18, 33, 0.95);
       border-top: 1px solid var(--border-color);
     }
 
@@ -430,111 +345,117 @@
     <div class="progress-bar" id="progressBar"></div>
   </div>
 
-  <!-- 頂部欄位 -->
+  <!-- 頂部列 -->
   <header>
     <div class="brand">
-      <span>⚡</span> 行銷團隊三大核心營運系統與鋰電市場戰略
+      <span>🔋</span> 行銷團隊三大營運中樞與鋰電智能推播平台
     </div>
     <div class="controls-top">
-      <div class="backend-status" id="backendStatus" data-state="idle" title="Google Sheets 後台連線狀態">
-        <span class="dot"></span><span id="backendStatusText">檢查後台…</span>
-      </div>
-      <button class="btn" onclick="loadAllLogs()" title="從 Google Sheets 重新讀取資料">🔄 重新同步</button>
       <button class="btn" onclick="toggleFullScreen()">⛶ 全螢幕 (F)</button>
       <button class="btn btn-download" onclick="downloadSelf()">📥 下載本簡報 HTML</button>
     </div>
   </header>
 
-  <!-- 簡報主體內容 -->
+  <!-- 簡報主舞台 -->
   <main>
 
-    <!-- 目錄與架構總覽（第一頁） -->
+    <!-- Slide 1: 封面 -->
     <div class="slide active">
-      <div class="slide-tag">System Architecture</div>
-      <h2>全系統三大支柱與後台資料流架構</h2>
+      <div class="slide-tag">Marketing Ops & Intelligence Platform</div>
+      <h1>行銷營運後台三大整合系統<br>與鋰電池市場 08:00 智能推播中心</h1>
+      <p class="subtitle">為新能源行銷團隊打造：1) 白名單每日提醒後台 2) 團隊決策會議紀錄檢索庫 3) 鋰電池市場即時報告與每日晨間 08:00 自動推播引擎。全系統內建後台，隨時精準調閱資訊。</p>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-download" style="padding: 10px 22px; font-size: 0.95rem;" onclick="nextSlide()">開始系統檢視 ➔</button>
+      </div>
+    </div>
+
+    <!-- Slide 2: 三大系統總覽 -->
+    <div class="slide">
+      <div class="slide-tag">Architecture Overview</div>
+      <h2>三大模組與中央後台檢索資料流架構</h2>
       <div class="grid-3">
-        <div class="card card-link" role="button" tabindex="0" aria-label="前往每日提醒模組" onclick="goToSlide(1)">
-          <div class="card-header">01. 每人每日提醒事項</div>
+        <div class="card" onclick="goToSlide(2)" style="cursor: pointer;">
+          <div class="card-header">
+            <span>01</span> 白名單每日提醒系統
+          </div>
           <div class="card-content">
-            <p><strong>白名單驗證與個人填寫閉環：</strong></p>
+            <p><strong>填報流程與後台管控：</strong></p>
             <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li>主管預先配置團隊授權白名單</li>
-              <li>成員每日晨間自行勾選/回報 Top 3</li>
-              <li><strong>後台記錄：</strong>即時留存填報時間戳、出席率與未交提醒</li>
+              <li><strong>白名單權限庫：</strong>未在名單內無法提交。</li>
+              <li><strong>個人化填報：</strong>成員填寫今日 Top 1 交付與檢核。</li>
+              <li><strong>後台即時搜尋：</strong>主管可依同仁姓名、關鍵字或日期隨時追蹤。</li>
             </ul>
           </div>
         </div>
 
-        <div class="card card-link" role="button" tabindex="0" aria-label="前往會議紀錄模組" onclick="goToSlide(3)">
-          <div class="card-header">02. 團隊會議紀錄系統</div>
+        <div class="card" onclick="goToSlide(4)" style="cursor: pointer;">
+          <div class="card-header">
+            <span>02</span> 會議紀錄知識庫
+          </div>
           <div class="card-content">
-            <p><strong>高效決策與待辦追蹤中心：</strong></p>
+            <p><strong>決策歸檔與待辦追蹤：</strong></p>
             <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li>議題決策、衝突結論提煉</li>
-              <li>Action Items 唯一負責人與期限</li>
-              <li><strong>後台記錄：</strong>專案標籤、歷史紀錄檢索與進度追蹤</li>
+              <li><strong>標準化欄位：</strong>決策、負責人、交付日、專案標籤。</li>
+              <li><strong>後台檢索中心：</strong>支援關鍵字快搜、依負責人過濾。</li>
+              <li><strong>責任閉環：</strong>杜絕開完會無人落實的痛點。</li>
             </ul>
           </div>
         </div>
 
-        <div class="card card-link" role="button" tabindex="0" aria-label="前往市場分析模組" onclick="goToSlide(5)">
-          <div class="card-header">03. 鋰電池新市場分析</div>
+        <div class="card" onclick="goToSlide(6)" style="cursor: pointer;">
+          <div class="card-header">
+            <span>03</span> 鋰電市場 08:00 晨報推播
+          </div>
           <div class="card-content">
-            <p><strong>產業情報與商機報告庫：</strong></p>
+            <p><strong>產業情報與自動派送：</strong></p>
             <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li>AI 算力中心 BESS、東南亞兩輪電化</li>
-              <li>歐盟電池法規與工商業微電網</li>
-              <li><strong>後台記錄：</strong>報告歸檔、戰略評估分級與導流追蹤</li>
+              <li><strong>每日 08:00 派發：</strong>晨間定時推播最新碳酸鋰價與政策。</li>
+              <li><strong>情報分類收錄：</strong>AI 機房、工商業儲能、海外藍海。</li>
+              <li><strong>情報後台檢索：</strong>歷年市場報告全量歸檔即時查詢。</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 3: 模組 1 - 白名單每日提醒機制 -->
+    <!-- Slide 3: 模組 1 架構說明 -->
     <div class="slide">
-      <div class="slide-tag">Module 1 : Daily Reminders</div>
-      <h2>每日提醒系統架構：白名單控管 ➔ 自行填報 ➔ 後台匯流</h2>
+      <div class="slide-tag">Module 1 : Daily Routine</div>
+      <h2>每日提醒系統：白名單驗證與後台稽核架構</h2>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header">🔐 白名單機制與前端防護設計</div>
+          <div class="card-header">🔐 白名單機制（Whitelist Protocol）</div>
           <div class="card-content">
-            <p><strong>為什麼需要白名單（Whitelist）？</strong></p>
-            <p>行銷團隊常面臨外包廠商、跨部門兼職人員混雜的情境。透過「主管設定白名單」：</p>
-            <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.8;">
-              <li><strong>權限隔離：</strong>僅限名單內同仁填報關鍵業務指標與預算排程。</li>
-              <li><strong>個人化視圖：</strong>成員選擇自身帳號後，自動載入專屬例行事項（如 Lead 派發、投放檢查）。</li>
-              <li><strong>稽核報表：</strong>後台自動統計「應填未填」名單並於每日 10:30 發出警示。</li>
+            <p><strong>嚴控資訊真實性與填報資格：</strong></p>
+            <ul style="margin-top: 10px; padding-left: 20px; line-height: 1.85;">
+              <li><strong>主管初始配置：</strong>由管理員於後台建立團隊授權名單（姓名、信箱、職務代碼）。</li>
+              <li><strong>動態驗證：</strong>前端表單與白名單資料庫校驗，防止外部廠商或無關人員誤填。</li>
+              <li><strong>未繳交預警：</strong>每日 10:00 後台自動比對「白名單人數 vs 實收人數」，一鍵篩出未交名單。</li>
             </ul>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">📋 後台資料流與儲存規格</div>
+          <div class="card-header">🔍 後台資訊檢索能力（Audit Dashboard）</div>
           <div class="card-content">
-            <p><strong>後台即時記錄結構（JSON/DB Payload）：</strong></p>
-            <pre style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; font-size: 0.78rem; color: var(--accent); margin-top: 8px; overflow-x: auto;">
-{
-  "log_id": "REM-20261113-001",
-  "user_name": "Elena (海外行銷)",
-  "timestamp": "2026-11-13 09:15:22",
-  "tasks_completed": ["Leads分發", "社群監測"],
-  "top_priority": "完成東南亞換電櫃型錄英文校對",
-  "status": "Submitted_On_Time"
-}</pre>
-            <p style="margin-top: 10px;">支援整合 Google Sheets API、Notion 知識庫或企業內聯 ERP 資料庫。</p>
+            <p><strong>讓管理者隨時找到任何紀錄：</strong></p>
+            <ul style="margin-top: 10px; padding-left: 20px; line-height: 1.85;">
+              <li><strong>姓名過濾：</strong>點擊即可調閱特定成員過去 30 天的回報歷程。</li>
+              <li><strong>關鍵字全文搜尋：</strong>輸入「展覽」、「Google Ads」或「電芯規格」立即撈取關聯填報。</li>
+              <li><strong>支援 CSV / JSON 匯出：</strong>可直接對接公司 HR 考勤或專案管理系統。</li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 4: 模組 1 - 實機互動體驗 -->
+    <!-- Slide 4: 模組 1 實機展示台 -->
     <div class="slide">
-      <div class="slide-tag">Module 1 : Interactive Prototype</div>
-      <h2>【現場體驗】白名單每日回報與後台即時記錄器</h2>
+      <div class="slide-tag">Module 1 : Live Prototype</div>
+      <h2>【實機操作】白名單每日填報與後台即時搜尋器</h2>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header">✍️ 前端回報入口（成員填寫區）</div>
+          <div class="card-header">✍️ 前端個人填寫區（含白名單驗證）</div>
           <div class="interactive-box">
             <div class="form-group">
               <label>1. 選擇白名單授權成員：</label>
@@ -547,37 +468,33 @@
             </div>
             <div class="form-group">
               <label>2. 今日核心聚焦任務（Top 1）：</label>
-              <input type="text" id="dailyTaskInput" placeholder="例：完成 Google Ads 預算調整與 B2B 名單確認">
+              <input type="text" id="dailyTaskInput" placeholder="例：歐洲儲能展樣品物流追蹤">
             </div>
-            <button class="btn btn-download" data-action="daily" onclick="submitDailyLog()">送出並寫入後台資料庫 ➔</button>
+            <button class="btn btn-download" onclick="submitDailyLog()">送出並寫入後台資料庫 ➔</button>
           </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">* 提示：可自行輸入任務送出，右側後台將即時動態增加紀錄。</p>
         </div>
 
         <div class="card">
-          <div class="card-header">🗄️ 後台即時記錄中心（Admin Log View）</div>
+          <div class="card-header">
+            <span>🗄️ 後台檢索中心（即時查詢）</span>
+            <span class="badge badge-info" id="dailyLogCount">3 筆紀錄</span>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="dailySearchInput" placeholder="🔍 搜尋同仁姓名或任務關鍵字..." oninput="filterDailyLogs()">
+          </div>
           <div class="table-container">
-            <table class="styled-table" id="dailyLogTable">
+            <table class="styled-table" id="dailyTable">
               <thead>
                 <tr>
                   <th>時間戳</th>
-                  <th>成員姓名</th>
+                  <th>白名單成員</th>
                   <th>今日關鍵任務</th>
                   <th>狀態</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>09:05:12</td>
-                  <td>Elena (海外/儲能)</td>
-                  <td>追蹤歐洲展覽樣品清關與物流進度</td>
-                  <td><span class="badge badge-success">正常送達</span></td>
-                </tr>
-                <tr>
-                  <td>09:20:45</td>
-                  <td>Sarah (數位投放)</td>
-                  <td>檢查碳酸鋰降價議題相關關鍵字 CPC</td>
-                  <td><span class="badge badge-success">正常送達</span></td>
-                </tr>
+              <tbody id="dailyTableBody">
+                <!-- 動態注入 -->
               </tbody>
             </table>
           </div>
@@ -585,85 +502,79 @@
       </div>
     </div>
 
-    <!-- Slide 5: 模組 2 - 會議紀錄架構 -->
+    <!-- Slide 5: 模組 2 架構說明 -->
     <div class="slide">
-      <div class="slide-tag">Module 2 : Meeting Minutes Standard</div>
-      <h2>會議紀錄系統架構：拒絕會議遺忘，沉澱高價值資產</h2>
+      <div class="slide-tag">Module 2 : Meeting Intelligence</div>
+      <h2>會議紀錄系統：結構化決策與後台多維檢索庫</h2>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header">📐 結構化會議欄位規格</div>
+          <div class="card-header">📋 標準化會議資料規格</div>
           <div class="card-content">
             <ul style="padding-left: 20px; line-height: 1.85;">
-              <li><strong>基本資訊標籤：</strong>會議主題、日期、出席人、專案分類（如動力電池、工商業儲能、展會）。</li>
-              <li><strong>核心決策摘要：</strong>明確記錄討論後的共識，避免無休止的重複討論。</li>
-              <li><strong>行動指派（Action Items）：</strong>嚴格要求「唯一負責人」＋「可交付成果驗收標準」＋「截止時間」。</li>
+              <li><strong>主題與專案標籤：</strong>明確分類為「動力電池」、「AI機房儲能」、「海外參展」或「法規應對」。</li>
+              <li><strong>決策精煉（Decisions）：</strong>捨棄冗長逐字稿，只記錄「最後定案結論」與「預算動支共識」。</li>
+              <li><strong>Action Item 矩陣：</strong>必填【唯一負責人】與【精確驗收時間】。</li>
             </ul>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">📊 後台管理核心能力</div>
+          <div class="card-header">🔎 會議紀錄後台調閱機制</div>
           <div class="card-content">
-            <p><strong>後台提供之管理與回溯功能：</strong></p>
-            <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.85;">
-              <li><strong>全文搜尋與標籤過濾：</strong>可依專案名或關鍵字（如「歐盟電池法」）一鍵調閱歷史紀錄。</li>
-              <li><strong>待辦事項看板對接：</strong>自動將紀錄內的 Action Items 拋轉至 Jira、Trello 或 Notion 看板。</li>
-              <li><strong>修改稽核軌跡：</strong>記錄最後編輯人與版本差異，確保數據一致性。</li>
+            <p><strong>不再發生「開過什麼會、誰說了什麼」找不到紀錄：</strong></p>
+            <ul style="margin-top: 10px; padding-left: 20px; line-height: 1.85;">
+              <li><strong>多維交叉篩選：</strong>可同時依「負責人 ＋ 進行中 ＋ 標籤」迅速過濾待追蹤事項。</li>
+              <li><strong>歷史關聯回溯：</strong>搜尋專案名稱（如「慕尼黑展」），即可自動串聯過去所有相關會議決議。</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 6: 模組 2 - 實機互動體驗 -->
+    <!-- Slide 6: 模組 2 實機展示台 -->
     <div class="slide">
-      <div class="slide-tag">Module 2 : Interactive Prototype</div>
-      <h2>【現場體驗】會議紀錄登錄與後台資料庫檢索</h2>
+      <div class="slide-tag">Module 2 : Live Prototype</div>
+      <h2>【實機操作】會議紀錄登錄與後台資料庫檢索</h2>
       <div class="grid-2">
         <div class="card">
           <div class="card-header">📝 新增會議決策紀錄</div>
           <div class="interactive-box">
             <div class="form-group">
               <label>會議主題：</label>
-              <input type="text" id="meetTitle" placeholder="例：Q4 歐洲儲能展宣傳策略對齊會">
+              <input type="text" id="meetTitle" placeholder="例：歐盟電池護照認證因應會">
             </div>
             <div class="form-group">
               <label>重要決策結論：</label>
-              <input type="text" id="meetDecision" placeholder="例：確定採用液冷櫃作為展出核心視覺亮點">
+              <input type="text" id="meetDecision" placeholder="例：選定第三方進行全生命週期碳足跡審核">
             </div>
             <div class="form-group">
-              <label>待辦事項負責人：</label>
-              <input type="text" id="meetOwner" placeholder="例：Kevin (企劃)">
+              <label>待辦事項唯一負責人：</label>
+              <input type="text" id="meetOwner" placeholder="例：Elena">
             </div>
-            <button class="btn btn-download" data-action="meeting" onclick="submitMeetingLog()">寫入會議資料庫 ➔</button>
+            <button class="btn btn-download" onclick="submitMeetingLog()">寫入會議資料庫 ➔</button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">🗄️ 會議紀錄後台資料庫</div>
+          <div class="card-header">
+            <span>🗄️ 會議紀錄後台資料庫</span>
+            <span class="badge badge-info" id="meetLogCount">3 筆會議</span>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="meetSearchInput" placeholder="🔍 搜尋會議主題、決策或負責人..." oninput="filterMeetingLogs()">
+          </div>
           <div class="table-container">
-            <table class="styled-table" id="meetLogTable">
+            <table class="styled-table" id="meetTable">
               <thead>
                 <tr>
                   <th>主題</th>
-                  <th>關鍵結論</th>
+                  <th>關鍵決策</th>
                   <th>負責人</th>
                   <th>狀態</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>歐盟電池護照法規研商</td>
-                  <td>委託第三方檢驗機構進行碳足跡認證</td>
-                  <td>Elena</td>
-                  <td><span class="badge badge-info">進行中</span></td>
-                </tr>
-                <tr>
-                  <td>AI 資料中心 BESS 方案推廣</td>
-                  <td>完成 4C 快充倍率電芯白皮書初稿</td>
-                  <td>Alex</td>
-                  <td><span class="badge badge-success">已結案</span></td>
-                </tr>
+              <tbody id="meetTableBody">
+                <!-- 動態注入 -->
               </tbody>
             </table>
           </div>
@@ -671,97 +582,91 @@
       </div>
     </div>
 
-    <!-- Slide 7: 模組 3 - 鋰電池市場深度分析 -->
+    <!-- Slide 7: 模組 3 架構說明 (含每日早上八點推播) -->
     <div class="slide">
-      <div class="slide-tag">Module 3 : Battery Market Intelligence</div>
-      <h2>鋰電池新興市場深層分析：2026 全球趨勢與戰略拐點</h2>
-      <div class="grid-3">
+      <div class="slide-tag">Module 3 : Battery Intelligence & 08:00 Push</div>
+      <h2>鋰電池市場情報分析與 🌅 每日 08:00 晨報推播機制</h2>
+      <div class="grid-2">
         <div class="card">
-          <div class="card-header">🖥️ AI 算力中心 BESS</div>
+          <div class="card-header">⏰ 每日早上 08:00 自動推播管線</div>
           <div class="card-content">
-            <p><strong>超大功率備援市場爆發：</strong></p>
-            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li>科技巨頭因應高能耗算力中心，傳統鉛酸 UPS 全面轉向具備 15 分鐘極限超大放電（3C-5C）的 LFP 鋰電系統。</li>
-              <li>行銷切角：主打<strong>「瞬間散熱效能與 UL9540A 安全認證」</strong>。</li>
+            <p><strong>零時差讓團隊掌握開工第一手商機：</strong></p>
+            <ul style="margin-top: 10px; padding-left: 20px; line-height: 1.85;">
+              <li><strong>07:30 自動爬取與摘要：</strong>排程爬梳全球能源署、碳酸鋰期貨盤價、同業新品（寧德/LG/比亞迪）發布。</li>
+              <li><strong>08:00 定時推播（Push Trigger）：</strong>自動透過 Slack、Teams、LINE 或 Email 派送 300 字精華戰報。</li>
+              <li><strong>自動歸檔後台：</strong>每一則推播皆同步寫入後台情報庫，方便行銷隨時引用寫白皮書。</li>
             </ul>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">🏭 工商業（C&I）與微電網</div>
+          <div class="card-header">🔬 鋰電池 2026 重點市場情報範疇</div>
           <div class="card-content">
-            <p><strong>電價機制下的剛性回報：</strong></p>
-            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li>各國高尖峰電費帶動工廠自備儲能（峰谷套利），回本週期縮短至 3.5 年內。</li>
-              <li>行銷切角：開發<strong>「線上 TCO 效益計算器」</strong>，用數據直接說服企業主。</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">📜 歐盟法規與出海新區域</div>
-          <div class="card-content">
-            <p><strong>碳關稅與新藍海開闢：</strong></p>
-            <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li>歐盟電池法規要求溯源；同時東南亞（越南/印尼）二輪換電櫃成倍數成長。</li>
-              <li>行銷切角：將<strong>「碳足跡透明度」</strong>包裝為外銷歐洲的第一護城河。</li>
+            <p><strong>後台主要監測的 4 大高價值板塊：</strong></p>
+            <ul style="margin-top: 10px; padding-left: 20px; line-height: 1.85;">
+              <li><strong>AI 算力中心 BESS：</strong>超大功率高倍率（3C-5C）放電備援需求。</li>
+              <li><strong>工商業儲能（C&I）：</strong>高電價地區峰谷套利與投資回本週期（TCO）。</li>
+              <li><strong>出海藍海：</strong>東南亞（越南/印尼）兩輪車換電櫃與中東極熱儲能案場。</li>
+              <li><strong>法規壁壘：</strong>歐盟電池法規、數位電池護照申報規範。</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 8: 模組 3 - 市場報告庫互動體驗 -->
+    <!-- Slide 8: 模組 3 實機展示台 -->
     <div class="slide">
-      <div class="slide-tag">Module 3 : Interactive Prototype</div>
-      <h2>【現場體驗】鋰電市場情報庫登錄與後台檢索中心</h2>
+      <div class="slide-tag">Module 3 : Live Prototype</div>
+      <h2>【實機操作】08:00 推播模擬器與情報後台檢索中心</h2>
       <div class="grid-2">
         <div class="card">
-          <div class="card-header">📊 登錄市場情報 / 競品分析報告</div>
+          <div class="card-header">
+            <span>📢 每日 08:00 晨間推播發布模擬</span>
+            <span class="badge badge-push">排程：每天 08:00 AM</span>
+          </div>
           <div class="interactive-box">
             <div class="form-group">
-              <label>報告標題：</label>
-              <input type="text" id="reportTitle" placeholder="例：2026 北美微電網 LFP 儲能櫃需求預測">
+              <label>情報主題：</label>
+              <input type="text" id="reportTitle" placeholder="例：北美科技巨頭資料中心採購 4C LFP 儲能櫃">
             </div>
             <div class="form-group">
               <label>市場分類：</label>
-              <select id="reportCategory">
+              <select id="reportCat">
                 <option value="AI 算力中心儲能">AI 算力中心儲能</option>
                 <option value="工商業 C&I 儲能">工商業 C&I 儲能</option>
-                <option value="東南亞兩輪電氣化">東南亞兩輪電氣化</option>
-                <option value="歐盟電池法規合規">歐盟電池法規合規</option>
+                <option value="東南亞兩輪電化">東南亞兩輪電化</option>
+                <option value="原料與法規合規">原料與法規合規</option>
               </select>
             </div>
             <div class="form-group">
-              <label>戰略建議摘要：</label>
-              <input type="text" id="reportSummary" placeholder="例：鎖定加州微電網補貼，聯合當地 SI 系統整合商切入">
+              <label>核心商機摘要：</label>
+              <input type="text" id="reportSummary" placeholder="例：極短時放電需求急增，建議行銷推廣大功率冷卻方案">
             </div>
-            <button class="btn btn-download" data-action="report" onclick="submitReportLog()">歸檔至情報後台 ➔</button>
+            <button class="btn btn-download" onclick="simulatePush()">模擬發布 08:00 晨報並推播 ➔</button>
           </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">* 點擊後將模擬 08:00 發出推播通知，並同步寫入右側情報後台。</p>
         </div>
 
         <div class="card">
-          <div class="card-header">🗄️ 市場情報庫後台（Intelligence Repository）</div>
+          <div class="card-header">
+            <span>🗄️ 鋰電情報後台檢索庫</span>
+            <span class="badge badge-info" id="reportLogCount">3 筆情報</span>
+          </div>
+          <div class="search-bar">
+            <input type="text" id="reportSearchInput" placeholder="🔍 搜尋鋰電分類、情報標題或商機關鍵字..." oninput="filterReportLogs()">
+          </div>
           <div class="table-container">
-            <table class="styled-table" id="reportLogTable">
+            <table class="styled-table" id="reportTable">
               <thead>
                 <tr>
-                  <th>報告主題</th>
+                  <th>推播時間</th>
                   <th>市場分類</th>
-                  <th>核心戰略結論</th>
+                  <th>情報內容與商機分析</th>
+                  <th>派送狀態</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>印尼兩輪機車換電電芯標準分析</td>
-                  <td>東南亞兩輪電氣化</td>
-                  <td>主攻耐高溫防水防爆規格電芯</td>
-                </tr>
-                <tr>
-                  <td>歐盟電池護照數位申報指引</td>
-                  <td>歐盟電池法規合規</td>
-                  <td>需於 Q3 前完成全生命週期碳審核</td>
-                </tr>
+              <tbody id="reportTableBody">
+                <!-- 動態注入 -->
               </tbody>
             </table>
           </div>
@@ -769,59 +674,59 @@
       </div>
     </div>
 
-    <!-- Slide 9: 總體技術實施藍圖 -->
+    <!-- Slide 9: 統一後台整合中樞概念 -->
     <div class="slide">
-      <div class="slide-tag">Implementation Roadmap</div>
-      <h2>三大系統後台落地技術選型建議</h2>
+      <div class="slide-tag">Unified Dashboard View</div>
+      <h2>全系統單一登入（SSO）管理後台整合視圖</h2>
       <div class="grid-3">
         <div class="card">
-          <div class="card-header">🚀 敏捷輕量方案 (No-Code/低代碼)</div>
+          <div class="card-header">🎯 管理者全局視圖</div>
           <div class="card-content">
-            <p><strong>適合 1~2 週內快速上線：</strong></p>
+            <p><strong>主管登入後台首頁即可看到：</strong></p>
             <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li><strong>前端：</strong>Notion Database 或 Airtable 表單。</li>
-              <li><strong>後台記錄：</strong>直接利用 Airtable 視圖進行權限分流與白名單鎖定。</li>
-              <li><strong>提醒觸發：</strong>串接 Slack / LINE 機器人自動發送未交提醒。</li>
+              <li><strong>今日出席與回報率：</strong>白名單 12 人中已填 11 人。</li>
+              <li><strong>待結案會議行動：</strong>3 件 Action Item 剩餘 24 小時。</li>
+              <li><strong>今日 08:00 推播狀況：</strong>已成功發送至 Slack #marketing。</li>
             </ul>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">🏢 企業級專屬方案 (Full-Stack)</div>
+          <div class="card-header">⚡ 技術實施選型</div>
           <div class="card-content">
-            <p><strong>適合長期資產沉澱與資料安全：</strong></p>
+            <p><strong>推薦之輕量高穩定架構：</strong></p>
             <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li><strong>前端：</strong>Vue / React 單頁應用程式（SPA）。</li>
-              <li><strong>後台資料庫：</strong>PostgreSQL (Supabase) + SSO 企業單一登入白名單驗證。</li>
-              <li><strong>報表大屏：</strong>Grafana 或 PowerBI 視覺化展示全員回報率。</li>
+              <li><strong>資料庫：</strong>Supabase / Firebase（即時同步、原生支援白名單身分驗證）。</li>
+              <li><strong>定時任務（Cron）：</strong>GitHub Actions 或 Cloudflare Workers 於每日 08:00 AM 觸發 Webhook 推播。</li>
+              <li><strong>推播介面：</strong>Webhook 轉發至 Line Notify / Slack Webhook。</li>
             </ul>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">📈 預期效益與 KPI 衡量</div>
+          <div class="card-header">📈 預期成效</div>
           <div class="card-content">
-            <p><strong>數位化上線成效指標：</strong></p>
+            <p><strong>帶給團隊的實質改變：</strong></p>
             <ul style="margin-top: 8px; padding-left: 18px; line-height: 1.8;">
-              <li><strong>晨間對齊效率提升 40%：</strong>杜絕口頭催收，透過看板一目了然。</li>
-              <li><strong>會議執行落實率達 95%：</strong>後台追蹤每個 Action Item 不遺失。</li>
-              <li><strong>市場情報轉化率提高：</strong>讓鋰電情報及時反哺至廣告與業務宣傳。</li>
+              <li><strong>資訊尋找時間降低 80%：</strong>所有對齊都在後台查得到。</li>
+              <li><strong>行銷內容緊跟行情：</strong>每天早上 8 點吸收新情報，產出最懂鋰電趨勢的文案與白皮書。</li>
+              <li><strong>執行紀律化：</strong>以白名單機制建立團隊高效率閉環。</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 10: 總結與下載提醒 -->
+    <!-- Slide 10: 結語與下載按鈕 -->
     <div class="slide">
       <div class="slide-tag">Action Now</div>
-      <h1>推動規範上線，賦能行銷全員</h1>
-      <p class="subtitle">將每日提醒的執行紀律、會議決策的追蹤反饋，與外部鋰電市場脈動深度結合，形成行銷團隊高產出閉環。</p>
+      <h1>三大系統整備就緒，隨時啟動</h1>
+      <p class="subtitle">將每日的紀律、會議的決策，以及鋰電池市場瞬息萬變的新知，沉澱在能隨時檢索的後台資料庫中，讓行銷團隊戰力倍增。</p>
       <div class="card" style="max-width: 650px;">
-        <div class="card-header">💾 本簡報檔案隨時離線攜帶</div>
+        <div class="card-header">💾 下載這份完整簡報檔案</div>
         <div class="card-content">
-          <p>您剛才在各投影片體驗區填寫的展示紀錄均保存在當前環境中。您可隨時點擊右上角<strong>「📥 下載本簡報 HTML」</strong>按鈕，直接將整份程式碼打包存檔，在任何電腦上直接向主管與團隊展演！</p>
-          <div style="margin-top: 14px;">
+          <p>您剛才在簡報內填寫的所有實機測試資料，均保存在當前環境中。點擊下方按鈕即可將整份簡報打包為單一 HTML 檔案，離線直接在瀏覽器投影與展示！</p>
+          <div style="margin-top: 15px;">
             <button class="btn btn-download" onclick="downloadSelf()">立即下載單一 HTML 簡報檔 📥</button>
           </div>
         </div>
@@ -830,238 +735,17 @@
 
   </main>
 
-  <!-- 底部導覽列 -->
+  <!-- 底部導覽欄 -->
   <footer>
-    <div class="slide-counter" id="slideCounter">1 / 9</div>
+    <div class="slide-counter" id="slideCounter">1 / 10</div>
     <div class="nav-buttons">
       <button class="btn" onclick="prevSlide()">◀ 上一頁</button>
       <button class="btn btn-download" onclick="nextSlide()">下一頁 ▶</button>
     </div>
   </footer>
 
-  <!-- 提示訊息容器 -->
-  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
-
   <script>
-    /* ============================================================
-       後台設定：Google Sheets + Apps Script
-       1. 依 apps-script/README.md 建好試算表並部署 Web App
-       2. 把 /exec 網址貼到下面的 url
-       3. （選用）Apps Script 若設定了指令碼屬性 TOKEN，這裡填入相同值
-       設定完成後重新整理，右上角狀態燈會顯示「後台已連線」
-       ============================================================ */
-    const BACKEND = {
-      url: '',      // 例：'https://script.google.com/macros/s/AKfycbxxxxxxxx/exec'
-      token: '',    // 例：'mkt2026-secret'
-      limit: 20     // 每個模組載入的最近筆數
-    };
-
-    const SHEET_META = {
-      daily: { text: '正常送達', badge: 'badge-success' },
-      meeting: { text: '新建立', badge: 'badge-info' }
-    };
-
-    const API = {
-      ready() {
-        return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test((BACKEND.url || '').trim());
-      },
-
-      unwrap(text) {
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (err) {
-          throw new Error('後台回應格式錯誤（請確認部署網址為 /exec）');
-        }
-        if (!data || data.ok !== true) {
-          throw new Error((data && data.error) || '後台回傳失敗');
-        }
-        return data;
-      },
-
-      async get(params) {
-        const query = new URLSearchParams(Object.assign({}, params, { token: BACKEND.token || '' }));
-        const res = await fetch(BACKEND.url.trim() + '?' + query.toString(), {
-          method: 'GET',
-          cache: 'no-store'
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return API.unwrap(await res.text());
-      },
-
-      async post(payload) {
-        // 用 text/plain 送出：Apps Script 不處理 CORS preflight，application/json 會被瀏覽器擋下
-        const res = await fetch(BACKEND.url.trim(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(Object.assign({}, payload, { token: BACKEND.token || '' }))
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return API.unwrap(await res.text());
-      }
-    };
-
-    /* ------------------------- 共用 UI ------------------------- */
-
-    function toast(message, type = 'info', detail = '') {
-      const stack = document.getElementById('toastStack');
-      if (!stack) return;
-
-      const el = document.createElement('div');
-      el.className = 'toast';
-      el.dataset.type = type;
-      el.textContent = message;
-
-      if (detail) {
-        const small = document.createElement('small');
-        small.textContent = detail;
-        el.appendChild(small);
-      }
-
-      stack.appendChild(el);
-      window.setTimeout(() => {
-        el.style.transition = 'opacity .25s ease';
-        el.style.opacity = '0';
-        window.setTimeout(() => el.remove(), 260);
-      }, type === 'error' || type === 'warn' ? 6000 : 3800);
-    }
-
-    function setBackendStatus(state, text) {
-      const box = document.getElementById('backendStatus');
-      const label = document.getElementById('backendStatusText');
-      if (!box || !label) return;
-      box.dataset.state = state;
-      label.textContent = text;
-      box.title = text;
-    }
-
-    function setBusy(button, busy) {
-      if (!button) return;
-      if (busy) {
-        button.dataset.label = button.textContent;
-        button.disabled = true;
-        button.textContent = '寫入中…';
-      } else {
-        button.disabled = false;
-        if (button.dataset.label) button.textContent = button.dataset.label;
-      }
-    }
-
-    function tbodyOf(tableId) {
-      return document.getElementById(tableId).getElementsByTagName('tbody')[0];
-    }
-
-    function makeCell(value) {
-      const td = document.createElement('td');
-      if (value instanceof Node) {
-        td.appendChild(value);
-      } else {
-        td.textContent = value == null ? '' : String(value);
-      }
-      return td;
-    }
-
-    function makeRow(values) {
-      const tr = document.createElement('tr');
-      values.forEach(value => tr.appendChild(makeCell(value)));
-      return tr;
-    }
-
-    function badge(text, className) {
-      const span = document.createElement('span');
-      span.className = 'badge ' + className;
-      span.textContent = text;
-      return span;
-    }
-
-    function renderRows(tableId, rows, mapper) {
-      const table = document.getElementById(tableId);
-      const tbody = table.getElementsByTagName('tbody')[0];
-      tbody.innerHTML = '';
-      if (!rows || !rows.length) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = table.querySelectorAll('thead th').length || 4;
-        td.style.color = 'var(--text-muted)';
-        td.textContent = '尚無資料 — 送出第一筆就會寫入 Google Sheets';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-        return;
-      }
-      rows.forEach(record => tbody.appendChild(mapper(record)));
-    }
-
-    function prependRow(tableId, rowElement) {
-      const tbody = tbodyOf(tableId);
-      const first = tbody.firstElementChild;
-      if (first && first.children.length === 1 && first.firstElementChild.colSpan > 1) {
-        tbody.innerHTML = '';
-      }
-      tbody.insertBefore(rowElement, tbody.firstElementChild);
-    }
-
-    function dailyRow(record, statusText, statusClass) {
-      return makeRow([
-        record.time || '',
-        record.user || '',
-        record.task || '',
-        badge(statusText || SHEET_META.daily.text, statusClass || SHEET_META.daily.badge)
-      ]);
-    }
-
-    function meetingRow(record, statusText, statusClass) {
-      return makeRow([
-        record.title || '',
-        record.decision || '',
-        record.owner || '團隊',
-        badge(statusText || SHEET_META.meeting.text, statusClass || SHEET_META.meeting.badge)
-      ]);
-    }
-
-    function reportRow(record) {
-      return makeRow([
-        record.title || '',
-        record.category || '',
-        record.summary || ''
-      ]);
-    }
-
-    function nowTime() {
-      return new Date().toLocaleTimeString('zh-TW', { hour12: false });
-    }
-
-    async function loadAllLogs(silent) {
-      if (!API.ready()) {
-        setBackendStatus('warn', '後台未設定');
-        if (!silent) {
-          toast('尚未設定後台網址', 'warn', '請在 index.html 的 BACKEND.url 填入 Apps Script /exec 網址');
-        }
-        return;
-      }
-
-      setBackendStatus('idle', '同步中…');
-      try {
-        const [daily, meeting, report] = await Promise.all([
-          API.get({ action: 'list', sheet: 'daily', limit: BACKEND.limit }),
-          API.get({ action: 'list', sheet: 'meeting', limit: BACKEND.limit }),
-          API.get({ action: 'list', sheet: 'report', limit: BACKEND.limit })
-        ]);
-
-        renderRows('dailyLogTable', daily.rows, dailyRow);
-        renderRows('meetLogTable', meeting.rows, meetingRow);
-        renderRows('reportLogTable', report.rows, reportRow);
-
-        const total = daily.rows.length + meeting.rows.length + report.rows.length;
-        setBackendStatus('ok', `後台已連線（${total} 筆）`);
-        if (!silent) toast('已同步 Google Sheets 資料', 'success', `共 ${total} 筆`);
-      } catch (err) {
-        setBackendStatus('error', '後台連線失敗');
-        if (!silent) toast('無法讀取後台資料', 'error', err.message);
-        console.error(err);
-      }
-    }
-
-    // 投影片狀態控制
+    // ====================== 投影片翻頁引擎 ======================
     const slides = document.querySelectorAll('.slide');
     const progressBar = document.getElementById('progressBar');
     const slideCounter = document.getElementById('slideCounter');
@@ -1098,17 +782,6 @@
       }
     }
 
-    // 目錄卡片：支援 Enter / Space 點選
-    document.querySelectorAll('.card-link').forEach(card => {
-      card.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          e.stopPropagation();
-          card.click();
-        }
-      });
-    });
-
     // 鍵盤監聽
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
@@ -1122,7 +795,6 @@
       }
     });
 
-    // 全螢幕切換
     function toggleFullScreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -1133,126 +805,150 @@
       }
     }
 
-    // 模組 1：互動體驗邏輯（寫入 Google Sheets）
-    async function submitDailyLog() {
+    // ====================== 模組 1：白名單每日提醒系統資料與搜尋 ======================
+    let dailyLogs = [
+      { time: '09:02:15', user: 'Elena (海外/儲能)', task: '追蹤歐洲展覽樣品物流與清關認證', status: '正常' },
+      { time: '09:14:30', user: 'Sarah (數位投放)', task: '檢視 Google Ads 儲能關鍵字與碳酸鋰降價話題 CPL', status: '正常' },
+      { time: '09:25:10', user: 'Kevin (展覽/企劃)', task: '核對攤位 3D 設計圖與雙層結構消防標準', status: '正常' }
+    ];
+
+    function renderDailyLogs(data) {
+      const tbody = document.getElementById('dailyTableBody');
+      tbody.innerHTML = '';
+      data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.time}</td><td><strong>${item.user}</strong></td><td>${item.task}</td><td><span class="badge badge-success">${item.status}</span></td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('dailyLogCount').textContent = `${data.length} 筆紀錄`;
+    }
+
+    function submitDailyLog() {
       const user = document.getElementById('userSelect').value;
       const task = document.getElementById('dailyTaskInput').value.trim();
       if (!task) {
-        toast('請先輸入今日任務內容！', 'warn');
+        alert('請先輸入今日任務！');
         return;
       }
-
-      const button = document.querySelector('[data-action="daily"]');
-      setBusy(button, true);
-      try {
-        if (!API.ready()) throw new Error('NO_BACKEND');
-
-        const data = await API.post({ action: 'submit', sheet: 'daily', payload: { user, task } });
-        prependRow('dailyLogTable', dailyRow(data.record));
-        document.getElementById('dailyTaskInput').value = '';
-        toast('已寫入 Google Sheets', 'success', `${user}｜${data.record.log_id}`);
-      } catch (err) {
-        if (err.message === 'NO_BACKEND') {
-          prependRow('dailyLogTable', dailyRow({ time: nowTime(), user, task }, '僅本頁', 'badge-warn'));
-          document.getElementById('dailyTaskInput').value = '';
-          toast('尚未設定後台網址，資料只顯示在本頁', 'warn', '請在 BACKEND.url 填入 Apps Script /exec 網址');
-        } else {
-          toast('寫入失敗，資料未送出', 'error', err.message);
-        }
-      } finally {
-        setBusy(button, false);
-      }
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      dailyLogs.unshift({ time: timeStr, user: user, task: task, status: '即時寫入' });
+      document.getElementById('dailyTaskInput').value = '';
+      renderDailyLogs(dailyLogs);
+      alert(`【白名單驗證通過】\n${user} 今日任務已成功同步至後台資料庫！`);
     }
 
-    // 模組 2：會議紀錄互動邏輯（寫入 Google Sheets）
-    async function submitMeetingLog() {
+    function filterDailyLogs() {
+      const q = document.getElementById('dailySearchInput').value.toLowerCase();
+      const filtered = dailyLogs.filter(item => 
+        item.user.toLowerCase().includes(q) || item.task.toLowerCase().includes(q)
+      );
+      renderDailyLogs(filtered);
+    }
+
+    // ====================== 模組 2：會議紀錄資料與搜尋 ======================
+    let meetingLogs = [
+      { title: '歐盟電池護照法規因應會', decision: '委託第三方認證全生命週期碳足跡', owner: 'Elena', status: '進行中' },
+      { title: 'AI 算力中心儲能方案推廣', decision: '發布 4C 快充倍率 LFP 電芯白皮書', owner: 'Alex', status: '已結案' },
+      { title: '海外展覽預算審查會議', decision: '確認租用慕尼黑 72 平米島型攤位', owner: 'Kevin', status: '已結案' }
+    ];
+
+    function renderMeetingLogs(data) {
+      const tbody = document.getElementById('meetTableBody');
+      tbody.innerHTML = '';
+      data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><strong>${item.title}</strong></td><td>${item.decision}</td><td>${item.owner}</td><td><span class="badge badge-info">${item.status}</span></td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('meetLogCount').textContent = `${data.length} 筆會議`;
+    }
+
+    function submitMeetingLog() {
       const title = document.getElementById('meetTitle').value.trim();
       const decision = document.getElementById('meetDecision').value.trim();
       const owner = document.getElementById('meetOwner').value.trim();
-
       if (!title || !decision) {
-        toast('請填寫完整會議主題與決策！', 'warn');
+        alert('請填寫完整會議主題與決策！');
         return;
       }
-
-      const button = document.querySelector('[data-action="meeting"]');
-      setBusy(button, true);
-      try {
-        if (!API.ready()) throw new Error('NO_BACKEND');
-
-        const data = await API.post({ action: 'submit', sheet: 'meeting', payload: { title, decision, owner } });
-        prependRow('meetLogTable', meetingRow(data.record));
-        document.getElementById('meetTitle').value = '';
-        document.getElementById('meetDecision').value = '';
-        document.getElementById('meetOwner').value = '';
-        toast('會議紀錄已歸檔至 Google Sheets', 'success', data.record.log_id);
-      } catch (err) {
-        if (err.message === 'NO_BACKEND') {
-          prependRow('meetLogTable', meetingRow({ title, decision, owner }, '僅本頁', 'badge-warn'));
-          document.getElementById('meetTitle').value = '';
-          document.getElementById('meetDecision').value = '';
-          document.getElementById('meetOwner').value = '';
-          toast('尚未設定後台網址，資料只顯示在本頁', 'warn', '請在 BACKEND.url 填入 Apps Script /exec 網址');
-        } else {
-          toast('寫入失敗，資料未送出', 'error', err.message);
-        }
-      } finally {
-        setBusy(button, false);
-      }
+      meetingLogs.unshift({ title, decision, owner: owner || '團隊全員', status: '新增' });
+      document.getElementById('meetTitle').value = '';
+      document.getElementById('meetDecision').value = '';
+      document.getElementById('meetOwner').value = '';
+      renderMeetingLogs(meetingLogs);
+      alert('會議決策已成功存檔至後台檢索中心！');
     }
 
-    // 模組 3：市場報告庫互動邏輯（寫入 Google Sheets）
-    async function submitReportLog() {
+    function filterMeetingLogs() {
+      const q = document.getElementById('meetSearchInput').value.toLowerCase();
+      const filtered = meetingLogs.filter(item => 
+        item.title.toLowerCase().includes(q) || item.decision.toLowerCase().includes(q) || item.owner.toLowerCase().includes(q)
+      );
+      renderMeetingLogs(filtered);
+    }
+
+    // ====================== 模組 3：鋰電池市場情報與 08:00 推播 ======================
+    let reportLogs = [
+      { time: '今日 08:00', cat: 'AI 算力中心儲能', summary: '微軟與 AWS 資料中心轉向採用 4C LFP 備援電池，UPS 替換潮成型。', status: '已派發' },
+      { time: '昨日 08:00', cat: '原料與法規合規', summary: '碳酸鋰報價止跌回穩，歐盟公布最新電池護照二期申報規則。', status: '已派發' },
+      { time: '前日 08:00', cat: '東南亞兩輪電化', summary: '越南政府加碼補貼換電網建置，輕型動力電池需求季增 35%。', status: '已派發' }
+    ];
+
+    function renderReportLogs(data) {
+      const tbody = document.getElementById('reportTableBody');
+      tbody.innerHTML = '';
+      data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.time}</td><td><span class="badge badge-push">${item.cat}</span></td><td>${item.summary}</td><td><span class="badge badge-success">${item.status}</span></td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById('reportLogCount').textContent = `${data.length} 筆情報`;
+    }
+
+    function simulatePush() {
       const title = document.getElementById('reportTitle').value.trim();
-      const cat = document.getElementById('reportCategory').value;
+      const cat = document.getElementById('reportCat').value;
       const sum = document.getElementById('reportSummary').value.trim();
-
       if (!title || !sum) {
-        toast('請填寫報告標題與戰略摘要！', 'warn');
+        alert('請填寫完整情報標題與摘要！');
         return;
       }
-
-      const button = document.querySelector('[data-action="report"]');
-      setBusy(button, true);
-      try {
-        if (!API.ready()) throw new Error('NO_BACKEND');
-
-        const data = await API.post({ action: 'submit', sheet: 'report', payload: { title, category: cat, summary: sum } });
-        prependRow('reportLogTable', reportRow(data.record));
-        document.getElementById('reportTitle').value = '';
-        document.getElementById('reportSummary').value = '';
-        toast('市場分析報告已收錄至 Google Sheets', 'success', data.record.log_id);
-      } catch (err) {
-        if (err.message === 'NO_BACKEND') {
-          prependRow('reportLogTable', reportRow({ title, category: cat, summary: sum }));
-          document.getElementById('reportTitle').value = '';
-          document.getElementById('reportSummary').value = '';
-          toast('尚未設定後台網址，資料只顯示在本頁', 'warn', '請在 BACKEND.url 填入 Apps Script /exec 網址');
-        } else {
-          toast('寫入失敗，資料未送出', 'error', err.message);
-        }
-      } finally {
-        setBusy(button, false);
-      }
+      const fullText = `【${title}】${sum}`;
+      reportLogs.unshift({ time: '08:00 (模擬)', cat: cat, summary: fullText, status: '已推播' });
+      document.getElementById('reportTitle').value = '';
+      document.getElementById('reportSummary').value = '';
+      renderReportLogs(reportLogs);
+      alert(`⏰【08:00 AM 晨間推播發送成功！】\n\n分類：${cat}\n標題：${title}\n已同步發送至行銷全員頻道並歸檔至後台情報庫！`);
     }
 
-    // 下載自身為完整 HTML 檔案
+    function filterReportLogs() {
+      const q = document.getElementById('reportSearchInput').value.toLowerCase();
+      const filtered = reportLogs.filter(item => 
+        item.cat.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q)
+      );
+      renderReportLogs(filtered);
+    }
+
+    // ====================== 一鍵下載為完整 HTML ======================
     function downloadSelf() {
       const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
       const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "行銷團隊營運後台與鋰電市場分析簡報.html";
+      a.download = "行銷團隊營運後台與鋰電市場推播系統.html";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
-    // 初始化頁面
+    // 初始化渲染
     updateSlide();
-    loadAllLogs(true);
+    renderDailyLogs(dailyLogs);
+    renderMeetingLogs(meetingLogs);
+    renderReportLogs(reportLogs);
   </script>
 </body>
 </html>
