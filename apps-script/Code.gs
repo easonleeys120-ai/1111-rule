@@ -105,6 +105,13 @@ function doGet(e) {
 function doPost(e) {
   try {
     const body = parseBody_(e);
+
+    // LINE Messaging API webhook（自動捕捉加好友者的 userId）
+    if (Array.isArray(body.events)) {
+      handleLineWebhook_(body);
+      return json_({ ok: true });
+    }
+
     verifyToken_(body.token);
 
     const action = body.action || 'submit';
@@ -123,6 +130,24 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, error: message_(err) });
   }
+}
+
+function handleLineWebhook_(body) {
+  const props = PropertiesService.getScriptProperties();
+  const existing = (props.getProperty('LINE_RECIPIENT_IDS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  const set = {};
+  existing.forEach(function (id) { set[id] = true; });
+
+  (body.events || []).forEach(function (ev) {
+    const uid = ev && ev.source && ev.source.userId;
+    if (uid && !set[uid]) { set[uid] = true; existing.push(uid); }
+  });
+
+  if (existing.length) {
+    props.setProperty('LINE_RECIPIENT_IDS', existing.join(','));
+  }
+  Logger.log('LINE webhook: ' + (body.events || []).length + ' events; recipients=' + existing.join(','));
 }
 
 /* ========================= 初始化 / 選單 ========================= */
@@ -147,10 +172,28 @@ function onOpen() {
       .addItem('0. 填入範例資料（日期/提醒/會議/情報）', 'seedSampleData')
       .addItem('1. 初始化工作表', 'setup')
       .addItem('2. 設定每日 08:00 LINE 推播', 'setupDailyPush')
-      .addItem('3. 顯示部署設定', 'showDeployInfo')
+      .addItem('3. 顯示 LINE Webhook 網址', 'showWebhookInfo')
+      .addItem('4. 顯示部署設定', 'showDeployInfo')
       .addToUi();
   } catch (err) {
     Logger.log(err);
+  }
+}
+
+function showWebhookInfo() {
+  const url = ScriptApp.getService().getUrl();
+  const text = url
+    ? 'LINE Webhook 網址（貼到 LINE Developers → Webhook URL）：\n' + url +
+      '\n\n步驟：\n1. LINE Developers Console → 你的 channel → Messaging API 分頁\n' +
+      '2. Webhook URL 貼上上面網址 → Verify\n' +
+      '3. Use webhook：開啟\n' +
+      '4. 用 LINE 加 Bot 為好友，你的 userId 會自動寫入指令碼屬性 LINE_RECIPIENT_IDS\n' +
+      '5. 到 Apps Script → 專案設定 → 指令碼屬性 確認 LINE_RECIPIENT_IDS 已出現'
+    : '尚未部署。請先「部署 → 新增部署作業 → 網頁應用程式」。';
+  try {
+    SpreadsheetApp.getUi().alert('LINE Webhook', text, SpreadsheetApp.getUi().ButtonSet.OK);
+  } catch (e) {
+    Logger.log(text);
   }
 }
 

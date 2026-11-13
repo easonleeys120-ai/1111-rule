@@ -115,6 +115,13 @@ Web App 公開後，任何知道網址的人都能寫入。加一組共享 token
 
 把鋰電市場情報與當日填報摘要每天 08:00 推到 LINE。
 
+### 0. 自動捕捉 LINE userId（推薦，不用手動查）
+部署 Web App 後，試算表選單 **⚙️ 1111-rule 後台 → 3. 顯示 LINE Webhook 網址**，把網址貼到 LINE Developers Console → 你的 channel → **Messaging API → Webhook URL** → **Verify** → 開啟 **Use webhook**。
+
+然後用 LINE 加 Bot 為好友，你的 userId 會自動寫入指令碼屬性 `LINE_RECIPIENT_IDS`，不需手動填。
+
+> `easonlee120` 這類是顯示 ID，Messaging API 推播需要的是 `U` 開頭的 userId；Webhook 會自動捕捉正確的 ID。
+
 ### 1. 建立 LINE Messaging API 頻道
 1. 到 https://developers.line.biz/console/ → **Create a new provider**（若沒有）
 2. **Create a new channel → Messaging API**
