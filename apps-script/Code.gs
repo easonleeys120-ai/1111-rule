@@ -332,8 +332,49 @@ function fetchNews_(query, maxItems) {
     if (geminiNews.length > 0) return geminiNews;
   }
 
-  // 備援：Google News RSS（聚合 CNN/BBC/UDN/Digitimes 等，連結可開啟）
+  // 備援：直接 RSS 來源（Digitimes 等，連結可直接開啟）
+  const directNews = fetchNewsFromDirectSources_(maxItems);
+  if (directNews.length > 0) return directNews;
+
+  // 最後手段：Google News RSS（連結可能無法在 LINE 內開啟，建議設定 GEMINI_API_KEY）
   return fetchNewsFromGoogleNews_(maxItems);
+}
+
+function fetchNewsFromDirectSources_(maxItems) {
+  const items = [];
+  const seen = {};
+  const sources = [
+    { name: 'DIGITIMES', url: 'https://www.digitimes.com/rss/daily.xml' }
+  ];
+  const keywords = ['鋰電', '儲能', '電池', 'battery', 'lithium', 'BESS', '電動車', '能源', '充電', 'solar', '光電', 'AI', '伺服器'];
+
+  sources.forEach(function (src) {
+    try {
+      const res = UrlFetchApp.fetch(src.url, { muteHttpExceptions: true, followRedirects: true });
+      if (res.getResponseCode() !== 200) return;
+      const doc = XmlService.parse(res.getContentText());
+      const channel = doc.getRootElement().getChild('channel');
+      if (!channel) return;
+      const rssItems = channel.getChildren('item');
+      for (let i = 0; i < rssItems.length && items.length < maxItems; i++) {
+        const it = rssItems[i];
+        const title = textOf_(it, 'title');
+        const link = textOf_(it, 'link');
+        if (!title || !link) continue;
+        const lower = (title + ' ' + textOf_(it, 'description')).toLowerCase();
+        const match = keywords.some(function (k) { return lower.indexOf(k.toLowerCase()) >= 0; });
+        if (!match) continue;
+        const key = title.slice(0, 40);
+        if (seen[key]) continue;
+        seen[key] = true;
+        items.push({ title: title, link: link, source: src.name });
+      }
+    } catch (e) {
+      Logger.log('fetchNewsFromDirectSources_ ' + src.name + ' failed: ' + e);
+    }
+  });
+
+  return items.slice(0, maxItems);
 }
 
 function fetchNewsWithGemini_(apiKey, maxItems) {

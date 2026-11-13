@@ -144,11 +144,13 @@ Apps Script → **專案設定 → 指令碼屬性 → 新增指令碼屬性**�
 推送到 LINE。
 
 ### 5. 新聞自動抓取與 AI 摘要
-- 新聞來源：**Google News RSS** 聚合（涵蓋 CNN / BBC / UDN / Digitimes 等），關鍵字 `鋰電池 OR lithium battery OR 儲能 OR BESS`，每次取 8 則，並附上**可點連結**
-- **AI 摘要（選用）**：在指令碼屬性設定 `GEMINI_API_KEY` 或 `OPENAI_API_KEY`，推播會多一段 80-120 字的產業摘要
+- **直接來源**：DIGITIMES RSS（連結可直接開啟）
+- **AI 抓取（推薦）**：設定 `GEMINI_API_KEY`，用 Gemini + Google Search grounding 取得 CNN / BBC / UDN / Digitimes 等的**真實可開啟連結**
+- **備援**：Google News RSS（連結可能無法在 LINE 內開啟，建議設定 Gemini API key）
+- **AI 摘要（選用）**：設定 `GEMINI_API_KEY` 或 `OPENAI_API_KEY`，推播會多一段 80-120 字的產業摘要
   - Gemini：Google AI Studio → Get API key
   - ChatGPT：OpenAI Platform → API keys
-- 不設定 AI key 也能運作，只會推原始標題 + 連結
+- 不設定 AI key 也能運作，只會推原始標題 + 連結（來源為 DIGITIMES）
 Apps Script 編輯器 → 函式下拉選 `dailyPush` → **執行**，看 Logger 與 LINE 是否收到。
 
 ### 常見問題
