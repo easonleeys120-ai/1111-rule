@@ -297,6 +297,81 @@
     .badge-info { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 
+    /* 後台連線狀態 */
+    .backend-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.6);
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .backend-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex: none;
+    }
+
+    .backend-status[data-state="ok"] { color: #34d399; border-color: rgba(16, 185, 129, 0.45); }
+    .backend-status[data-state="ok"] .dot { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.85); }
+    .backend-status[data-state="warn"] { color: #fbbf24; border-color: rgba(245, 158, 11, 0.45); }
+    .backend-status[data-state="warn"] .dot { background: #fbbf24; }
+    .backend-status[data-state="error"] { color: #f87171; border-color: rgba(248, 113, 113, 0.45); }
+    .backend-status[data-state="error"] .dot { background: #f87171; }
+
+    /* 提示訊息 */
+    .toast-stack {
+      position: fixed;
+      right: 22px;
+      bottom: 78px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(360px, calc(100vw - 44px));
+    }
+
+    .toast {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+      background: rgba(18, 26, 43, 0.97);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      animation: toast-in 0.18s ease-out;
+    }
+
+    .toast[data-type="success"] { border-left-color: var(--primary); }
+    .toast[data-type="warn"] { border-left-color: var(--warning); }
+    .toast[data-type="error"] { border-left-color: #ef4444; }
+
+    .toast small {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      word-break: break-word;
+    }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .btn[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     /* 底部導覽列 */
     footer {
       display: flex;
@@ -332,6 +407,10 @@
       <span>⚡</span> 行銷團隊三大核心營運系統與鋰電市場戰略
     </div>
     <div class="controls-top">
+      <div class="backend-status" id="backendStatus" data-state="idle" title="Google Sheets 後台連線狀態">
+        <span class="dot"></span><span id="backendStatusText">檢查後台…</span>
+      </div>
+      <button class="btn" onclick="loadAllLogs()" title="從 Google Sheets 重新讀取資料">🔄 重新同步</button>
       <button class="btn" onclick="toggleFullScreen()">⛶ 全螢幕 (F)</button>
       <button class="btn btn-download" onclick="downloadSelf()">📥 下載本簡報 HTML</button>
     </div>
@@ -451,7 +530,7 @@
               <label>2. 今日核心聚焦任務（Top 1）：</label>
               <input type="text" id="dailyTaskInput" placeholder="例：完成 Google Ads 預算調整與 B2B 名單確認">
             </div>
-            <button class="btn btn-download" onclick="submitDailyLog()">送出並寫入後台資料庫 ➔</button>
+            <button class="btn btn-download" data-action="daily" onclick="submitDailyLog()">送出並寫入後台資料庫 ➔</button>
           </div>
         </div>
 
@@ -537,7 +616,7 @@
               <label>待辦事項負責人：</label>
               <input type="text" id="meetOwner" placeholder="例：Kevin (企劃)">
             </div>
-            <button class="btn btn-download" onclick="submitMeetingLog()">寫入會議資料庫 ➔</button>
+            <button class="btn btn-download" data-action="meeting" onclick="submitMeetingLog()">寫入會議資料庫 ➔</button>
           </div>
         </div>
 
@@ -638,7 +717,7 @@
               <label>戰略建議摘要：</label>
               <input type="text" id="reportSummary" placeholder="例：鎖定加州微電網補貼，聯合當地 SI 系統整合商切入">
             </div>
-            <button class="btn btn-download" onclick="submitReportLog()">歸檔至情報後台 ➔</button>
+            <button class="btn btn-download" data-action="report" onclick="submitReportLog()">歸檔至情報後台 ➔</button>
           </div>
         </div>
 
@@ -741,7 +820,228 @@
     </div>
   </footer>
 
+  <!-- 提示訊息容器 -->
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
   <script>
+    /* ============================================================
+       後台設定：Google Sheets + Apps Script
+       1. 依 apps-script/README.md 建好試算表並部署 Web App
+       2. 把 /exec 網址貼到下面的 url
+       3. （選用）Apps Script 若設定了指令碼屬性 TOKEN，這裡填入相同值
+       設定完成後重新整理，右上角狀態燈會顯示「後台已連線」
+       ============================================================ */
+    const BACKEND = {
+      url: '',      // 例：'https://script.google.com/macros/s/AKfycbxxxxxxxx/exec'
+      token: '',    // 例：'mkt2026-secret'
+      limit: 20     // 每個模組載入的最近筆數
+    };
+
+    const SHEET_META = {
+      daily: { text: '正常送達', badge: 'badge-success' },
+      meeting: { text: '新建立', badge: 'badge-info' }
+    };
+
+    const API = {
+      ready() {
+        return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test((BACKEND.url || '').trim());
+      },
+
+      unwrap(text) {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error('後台回應格式錯誤（請確認部署網址為 /exec）');
+        }
+        if (!data || data.ok !== true) {
+          throw new Error((data && data.error) || '後台回傳失敗');
+        }
+        return data;
+      },
+
+      async get(params) {
+        const query = new URLSearchParams(Object.assign({}, params, { token: BACKEND.token || '' }));
+        const res = await fetch(BACKEND.url.trim() + '?' + query.toString(), {
+          method: 'GET',
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return API.unwrap(await res.text());
+      },
+
+      async post(payload) {
+        // 用 text/plain 送出：Apps Script 不處理 CORS preflight，application/json 會被瀏覽器擋下
+        const res = await fetch(BACKEND.url.trim(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(Object.assign({}, payload, { token: BACKEND.token || '' }))
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return API.unwrap(await res.text());
+      }
+    };
+
+    /* ------------------------- 共用 UI ------------------------- */
+
+    function toast(message, type = 'info', detail = '') {
+      const stack = document.getElementById('toastStack');
+      if (!stack) return;
+
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.dataset.type = type;
+      el.textContent = message;
+
+      if (detail) {
+        const small = document.createElement('small');
+        small.textContent = detail;
+        el.appendChild(small);
+      }
+
+      stack.appendChild(el);
+      window.setTimeout(() => {
+        el.style.transition = 'opacity .25s ease';
+        el.style.opacity = '0';
+        window.setTimeout(() => el.remove(), 260);
+      }, type === 'error' || type === 'warn' ? 6000 : 3800);
+    }
+
+    function setBackendStatus(state, text) {
+      const box = document.getElementById('backendStatus');
+      const label = document.getElementById('backendStatusText');
+      if (!box || !label) return;
+      box.dataset.state = state;
+      label.textContent = text;
+      box.title = text;
+    }
+
+    function setBusy(button, busy) {
+      if (!button) return;
+      if (busy) {
+        button.dataset.label = button.textContent;
+        button.disabled = true;
+        button.textContent = '寫入中…';
+      } else {
+        button.disabled = false;
+        if (button.dataset.label) button.textContent = button.dataset.label;
+      }
+    }
+
+    function tbodyOf(tableId) {
+      return document.getElementById(tableId).getElementsByTagName('tbody')[0];
+    }
+
+    function makeCell(value) {
+      const td = document.createElement('td');
+      if (value instanceof Node) {
+        td.appendChild(value);
+      } else {
+        td.textContent = value == null ? '' : String(value);
+      }
+      return td;
+    }
+
+    function makeRow(values) {
+      const tr = document.createElement('tr');
+      values.forEach(value => tr.appendChild(makeCell(value)));
+      return tr;
+    }
+
+    function badge(text, className) {
+      const span = document.createElement('span');
+      span.className = 'badge ' + className;
+      span.textContent = text;
+      return span;
+    }
+
+    function renderRows(tableId, rows, mapper) {
+      const table = document.getElementById(tableId);
+      const tbody = table.getElementsByTagName('tbody')[0];
+      tbody.innerHTML = '';
+      if (!rows || !rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = table.querySelectorAll('thead th').length || 4;
+        td.style.color = 'var(--text-muted)';
+        td.textContent = '尚無資料 — 送出第一筆就會寫入 Google Sheets';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+      rows.forEach(record => tbody.appendChild(mapper(record)));
+    }
+
+    function prependRow(tableId, rowElement) {
+      const tbody = tbodyOf(tableId);
+      const first = tbody.firstElementChild;
+      if (first && first.children.length === 1 && first.firstElementChild.colSpan > 1) {
+        tbody.innerHTML = '';
+      }
+      tbody.insertBefore(rowElement, tbody.firstElementChild);
+    }
+
+    function dailyRow(record, statusText, statusClass) {
+      return makeRow([
+        record.time || '',
+        record.user || '',
+        record.task || '',
+        badge(statusText || SHEET_META.daily.text, statusClass || SHEET_META.daily.badge)
+      ]);
+    }
+
+    function meetingRow(record, statusText, statusClass) {
+      return makeRow([
+        record.title || '',
+        record.decision || '',
+        record.owner || '團隊',
+        badge(statusText || SHEET_META.meeting.text, statusClass || SHEET_META.meeting.badge)
+      ]);
+    }
+
+    function reportRow(record) {
+      return makeRow([
+        record.title || '',
+        record.category || '',
+        record.summary || ''
+      ]);
+    }
+
+    function nowTime() {
+      return new Date().toLocaleTimeString('zh-TW', { hour12: false });
+    }
+
+    async function loadAllLogs(silent) {
+      if (!API.ready()) {
+        setBackendStatus('warn', '後台未設定');
+        if (!silent) {
+          toast('尚未設定後台網址', 'warn', '請在 index.html 的 BACKEND.url 填入 Apps Script /exec 網址');
+        }
+        return;
+      }
+
+      setBackendStatus('idle', '同步中…');
+      try {
+        const [daily, meeting, report] = await Promise.all([
+          API.get({ action: 'list', sheet: 'daily', limit: BACKEND.limit }),
+          API.get({ action: 'list', sheet: 'meeting', limit: BACKEND.limit }),
+          API.get({ action: 'list', sheet: 'report', limit: BACKEND.limit })
+        ]);
+
+        renderRows('dailyLogTable', daily.rows, dailyRow);
+        renderRows('meetLogTable', meeting.rows, meetingRow);
+        renderRows('reportLogTable', report.rows, reportRow);
+
+        const total = daily.rows.length + meeting.rows.length + report.rows.length;
+        setBackendStatus('ok', `後台已連線（${total} 筆）`);
+        if (!silent) toast('已同步 Google Sheets 資料', 'success', `共 ${total} 筆`);
+      } catch (err) {
+        setBackendStatus('error', '後台連線失敗');
+        if (!silent) toast('無法讀取後台資料', 'error', err.message);
+        console.error(err);
+      }
+    }
+
     // 投影片狀態控制
     const slides = document.querySelectorAll('.slide');
     const progressBar = document.getElementById('progressBar');
@@ -803,56 +1103,107 @@
       }
     }
 
-    // 模組 1：互動體驗邏輯
-    function submitDailyLog() {
+    // 模組 1：互動體驗邏輯（寫入 Google Sheets）
+    async function submitDailyLog() {
       const user = document.getElementById('userSelect').value;
       const task = document.getElementById('dailyTaskInput').value.trim();
       if (!task) {
-        alert('請先輸入今日任務內容！');
+        toast('請先輸入今日任務內容！', 'warn');
         return;
       }
-      const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0];
-      const table = document.getElementById('dailyLogTable').getElementsByTagName('tbody')[0];
-      const newRow = table.insertRow(0);
-      newRow.innerHTML = `<td>${timeStr}</td><td>${user}</td><td>${task}</td><td><span class="badge badge-success">即時寫入</span></td>`;
-      document.getElementById('dailyTaskInput').value = '';
-      alert(`已成功記錄！\n成員：${user}\n任務已寫入後台數據庫。`);
+
+      const button = document.querySelector('[data-action="daily"]');
+      setBusy(button, true);
+      try {
+        if (!API.ready()) throw new Error('NO_BACKEND');
+
+        const data = await API.post({ action: 'submit', sheet: 'daily', payload: { user, task } });
+        prependRow('dailyLogTable', dailyRow(data.record));
+        document.getElementById('dailyTaskInput').value = '';
+        toast('已寫入 Google Sheets', 'success', `${user}｜${data.record.log_id}`);
+      } catch (err) {
+        if (err.message === 'NO_BACKEND') {
+          prependRow('dailyLogTable', dailyRow({ time: nowTime(), user, task }, '僅本頁', 'badge-warn'));
+          document.getElementById('dailyTaskInput').value = '';
+          toast('尚未設定後台網址，資料只顯示在本頁', 'warn', '請在 BACKEND.url 填入 Apps Script /exec 網址');
+        } else {
+          toast('寫入失敗，資料未送出', 'error', err.message);
+        }
+      } finally {
+        setBusy(button, false);
+      }
     }
 
-    // 模組 2：會議紀錄互動邏輯
-    function submitMeetingLog() {
+    // 模組 2：會議紀錄互動邏輯（寫入 Google Sheets）
+    async function submitMeetingLog() {
       const title = document.getElementById('meetTitle').value.trim();
       const decision = document.getElementById('meetDecision').value.trim();
       const owner = document.getElementById('meetOwner').value.trim();
+
       if (!title || !decision) {
-        alert('請填寫完整會議主題與決策！');
+        toast('請填寫完整會議主題與決策！', 'warn');
         return;
       }
-      const table = document.getElementById('meetLogTable').getElementsByTagName('tbody')[0];
-      const newRow = table.insertRow(0);
-      newRow.innerHTML = `<td>${title}</td><td>${decision}</td><td>${owner || '團隊'}</td><td><span class="badge badge-info">新建立</span></td>`;
-      document.getElementById('meetTitle').value = '';
-      document.getElementById('meetDecision').value = '';
-      document.getElementById('meetOwner').value = '';
-      alert('會議紀錄已成功歸檔至知識庫後台！');
+
+      const button = document.querySelector('[data-action="meeting"]');
+      setBusy(button, true);
+      try {
+        if (!API.ready()) throw new Error('NO_BACKEND');
+
+        const data = await API.post({ action: 'submit', sheet: 'meeting', payload: { title, decision, owner } });
+        prependRow('meetLogTable', meetingRow(data.record));
+        document.getElementById('meetTitle').value = '';
+        document.getElementById('meetDecision').value = '';
+        document.getElementById('meetOwner').value = '';
+        toast('會議紀錄已歸檔至 Google Sheets', 'success', data.record.log_id);
+      } catch (err) {
+        if (err.message === 'NO_BACKEND') {
+          prependRow('meetLogTable', meetingRow({ title, decision, owner }, '僅本頁', 'badge-warn'));
+          document.getElementById('meetTitle').value = '';
+          document.getElementById('meetDecision').value = '';
+          document.getElementById('meetOwner').value = '';
+          toast('尚未設定後台網址，資料只顯示在本頁', 'warn', '請在 BACKEND.url 填入 Apps Script /exec 網址');
+        } else {
+          toast('寫入失敗，資料未送出', 'error', err.message);
+        }
+      } finally {
+        setBusy(button, false);
+      }
     }
 
-    // 模組 3：市場報告庫互動邏輯
-    function submitReportLog() {
+    // 模組 3：市場報告庫互動邏輯（寫入 Google Sheets）
+    async function submitReportLog() {
       const title = document.getElementById('reportTitle').value.trim();
       const cat = document.getElementById('reportCategory').value;
       const sum = document.getElementById('reportSummary').value.trim();
+
       if (!title || !sum) {
-        alert('請填寫報告標題與戰略摘要！');
+        toast('請填寫報告標題與戰略摘要！', 'warn');
         return;
       }
-      const table = document.getElementById('reportLogTable').getElementsByTagName('tbody')[0];
-      const newRow = table.insertRow(0);
-      newRow.innerHTML = `<td>${title}</td><td>${cat}</td><td>${sum}</td>`;
-      document.getElementById('reportTitle').value = '';
-      document.getElementById('reportSummary').value = '';
-      alert('市場分析報告已成功收錄至情報庫！');
+
+      const button = document.querySelector('[data-action="report"]');
+      setBusy(button, true);
+      try {
+        if (!API.ready()) throw new Error('NO_BACKEND');
+
+        const data = await API.post({ action: 'submit', sheet: 'report', payload: { title, category: cat, summary: sum } });
+        prependRow('reportLogTable', reportRow(data.record));
+        document.getElementById('reportTitle').value = '';
+        document.getElementById('reportSummary').value = '';
+        toast('市場分析報告已收錄至 Google Sheets', 'success', data.record.log_id);
+      } catch (err) {
+        if (err.message === 'NO_BACKEND') {
+          prependRow('reportLogTable', reportRow({ title, category: cat, summary: sum }));
+          document.getElementById('reportTitle').value = '';
+          document.getElementById('reportSummary').value = '';
+          toast('尚未設定後台網址，資料只顯示在本頁', 'warn', '請在 BACKEND.url 填入 Apps Script /exec 網址');
+        } else {
+          toast('寫入失敗，資料未送出', 'error', err.message);
+        }
+      } finally {
+        setBusy(button, false);
+      }
     }
 
     // 下載自身為完整 HTML 檔案
@@ -871,6 +1222,7 @@
 
     // 初始化頁面
     updateSlide();
+    loadAllLogs(true);
   </script>
 </body>
 </html>
