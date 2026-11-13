@@ -144,6 +144,7 @@ function onOpen() {
   try {
     SpreadsheetApp.getUi()
       .createMenu('⚙️ 1111-rule 後台')
+      .addItem('0. 填入範例資料（日期/提醒/會議/情報）', 'seedSampleData')
       .addItem('1. 初始化工作表', 'setup')
       .addItem('2. 設定每日 08:00 LINE 推播', 'setupDailyPush')
       .addItem('3. 顯示部署設定', 'showDeployInfo')
@@ -371,6 +372,45 @@ function setupDailyPush() {
     SpreadsheetApp.getUi().alert('已設定每日 08:00 (' + TZ + ') 自動推播至 LINE');
   } catch (e) {
     Logger.log('trigger created');
+  }
+}
+
+function seedSampleData() {
+  const samples = {
+    daily: [
+      { user: 'Alex (行銷主管)', task: '確認 Q4 歐洲儲能展預算與攤位規劃' },
+      { user: 'Elena (海外/儲能)', task: '追蹤歐洲展覽樣品清關與物流進度' },
+      { user: 'Kevin (展覽/企劃)', task: '完成東南亞換電櫃型錄英文校對' },
+      { user: 'Sarah (數位投放)', task: '檢查碳酸鋰降價議題相關關鍵字 CPC' }
+    ],
+    meeting: [
+      { title: 'Q4 歐洲儲能展宣傳策略對齊會', decision: '確定採用液冷櫃作為展出核心視覺亮點', owner: 'Kevin (企劃)' },
+      { title: '歐盟電池護照法規研商', decision: '委託第三方檢驗機構進行碳足跡認證', owner: 'Elena (海外/儲能)' },
+      { title: 'AI 資料中心 BESS 方案推廣', decision: '完成 4C 快充倍率電芯白皮書初稿', owner: 'Alex (行銷主管)' }
+    ],
+    report: [
+      { title: '印尼兩輪機車換電電芯標準分析', category: '東南亞兩輪電氣化', summary: '主攻耐高溫防水防爆規格電芯' },
+      { title: '歐盟電池護照數位申報指引', category: '歐盟電池法規合規', summary: '需於 Q3 前完成全生命週期碳審核' },
+      { title: '2026 北美微電網 LFP 儲能櫃需求預測', category: '工商業 C&I 儲能', summary: '鎖定加州微電網補貼，聯合當地 SI 系統整合商切入' }
+    ]
+  };
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    Object.keys(samples).forEach(function (key) {
+      samples[key].forEach(function (payload) {
+        try { appendRecord_(key, payload); } catch (e) { Logger.log('seed ' + key + ' failed: ' + e); }
+      });
+    });
+  } finally {
+    lock.releaseLock();
+  }
+
+  try {
+    SpreadsheetApp.getUi().alert('已填入範例資料：每日提醒 4 筆、會議紀錄 3 筆、市場情報 3 筆');
+  } catch (e) {
+    Logger.log('seed done');
   }
 }
 
