@@ -325,6 +325,60 @@ function fetchNews_(query, maxItems) {
   return items;
 }
 
+function aiSummarizeNews_(news) {
+  if (!news || !news.length) return '';
+  const props = PropertiesService.getScriptProperties();
+  const geminiKey = props.getProperty('GEMINI_API_KEY');
+  const openaiKey = props.getProperty('OPENAI_API_KEY');
+
+  const headlines = news.map(function (n, i) {
+    return (i + 1) + '. ' + n.title + (n.source ? ' [' + n.source + ']' : '');
+  }).join('\n');
+
+  const prompt = '你是新能源產業分析師。以下是最新的鋰電池/儲能產業新聞標題，請用繁體中文寫一段 80-120 字的重點摘要，指出市場趨勢與對行銷團隊的啟示。只輸出摘要段落，不要條列：\n' + headlines;
+
+  // 優先用 Gemini
+  if (geminiKey) {
+    try {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + geminiKey;
+      const res = UrlFetchApp.fetch(url, {
+        method: 'post',
+        contentType: 'application/json',
+        payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        muteHttpExceptions: true
+      });
+      if (res.getResponseCode() === 200) {
+        const j = JSON.parse(res.getContentText());
+        const t = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts && j.candidates[0].content.parts[0] && j.candidates[0].content.parts[0].text;
+        if (t) return String(t).trim();
+      }
+    } catch (e) { Logger.log('Gemini failed: ' + e); }
+  }
+
+  // 備援：ChatGPT
+  if (openaiKey) {
+    try {
+      const res = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'post',
+        headers: { 'Authorization': 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
+        payload: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 200
+        }),
+        muteHttpExceptions: true
+      });
+      if (res.getResponseCode() === 200) {
+        const j = JSON.parse(res.getContentText());
+        const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        if (t) return String(t).trim();
+      }
+    } catch (e) { Logger.log('OpenAI failed: ' + e); }
+  }
+
+  return '';
+}
+
 function textOf_(parent, tag) {
   const el = parent.getChild(tag);
   return el ? String(el.getText() || '').trim() : '';
@@ -347,8 +401,11 @@ function dailyPush() {
   });
   const reportRows = listRecords_('report', 5);
 
-  // 自動抓取新聞（CNN/BBC/UDN/Digitimes 等，經 Google News 聚合）
+  // 自動抓取新聞（Google News 聚合 CNN/BBC/UDN/Digitimes 等，含可點連結）
   const news = fetchNews_('鋰電池 OR lithium battery OR 儲能 OR BESS', 8);
+
+  // 選用：用 Gemini / ChatGPT 產生摘要（需在指令碼屬性設定 GEMINI_API_KEY 或 OPENAI_API_KEY）
+  const aiSummary = aiSummarizeNews_(news);
 
   let text = '【行銷團隊每日晨報】' + today + '\n\n';
 
@@ -371,10 +428,14 @@ function dailyPush() {
     text += '（尚無報告）\n';
   }
 
-  text += '\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等）\n';
+  text += '\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等，點連結可開啟）\n';
+  if (aiSummary) {
+    text += aiSummary + '\n\n';
+  }
   if (news.length) {
     news.forEach(function (n) {
       text += '• ' + n.title + (n.source ? '  [' + n.source + ']' : '') + '\n';
+      if (n.link) text += '  ' + n.link + '\n';
     });
   } else {
     text += '（暫無新聞）\n';
