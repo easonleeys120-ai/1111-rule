@@ -252,6 +252,40 @@ function nextLogId_(sheet, def, now) {
 
 /* ============================ 08:00 每日 LINE 推播 ============================ */
 
+function fetchNews_(query, maxItems) {
+  maxItems = maxItems || 6;
+  const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(query) +
+    '&hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
+  const items = [];
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+    if (res.getResponseCode() !== 200) return items;
+    const doc = XmlService.parse(res.getContentText());
+    const channel = doc.getRootElement().getChild('channel');
+    if (!channel) return items;
+    const rssItems = channel.getChildren('item');
+    for (let i = 0; i < rssItems.length && items.length < maxItems; i++) {
+      const it = rssItems[i];
+      const title = textOf_(it, 'title');
+      const link = textOf_(it, 'link');
+      const pubDate = textOf_(it, 'pubDate');
+      const source = textOf_(it, 'source');
+      if (!title) continue;
+      // 去重（相同標題）
+      if (items.some(function (x) { return x.title === title; })) continue;
+      items.push({ title: title, link: link, pubDate: pubDate, source: source });
+    }
+  } catch (e) {
+    Logger.log('fetchNews_ failed: ' + e);
+  }
+  return items;
+}
+
+function textOf_(parent, tag) {
+  const el = parent.getChild(tag);
+  return el ? String(el.getText() || '').trim() : '';
+}
+
 function dailyPush() {
   const props = PropertiesService.getScriptProperties();
   const token = props.getProperty('LINE_CHANNEL_TOKEN');
@@ -269,7 +303,11 @@ function dailyPush() {
   });
   const reportRows = listRecords_('report', 5);
 
+  // 自動抓取新聞（CNN/BBC/UDN/Digitimes 等，經 Google News 聚合）
+  const news = fetchNews_('鋰電池 OR lithium battery OR 儲能 OR BESS', 8);
+
   let text = '【行銷團隊每日晨報】' + today + '\n\n';
+
   text += '📋 今日提醒（' + dailyRows.length + ' 筆）\n';
   if (dailyRows.length) {
     dailyRows.slice(0, 12).forEach(function (r) {
@@ -287,6 +325,15 @@ function dailyPush() {
     });
   } else {
     text += '（尚無報告）\n';
+  }
+
+  text += '\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等）\n';
+  if (news.length) {
+    news.forEach(function (n) {
+      text += '• ' + n.title + (n.source ? '  [' + n.source + ']' : '') + '\n';
+    });
+  } else {
+    text += '（暫無新聞）\n';
   }
 
   text += '\n後台試算表：' + getSpreadsheet_().getUrl();

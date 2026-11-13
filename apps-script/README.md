@@ -4,7 +4,13 @@
 
 ## 一、建立試算表
 
-1. 開啟 https://sheets.new ，建立一份新試算表（例：`1111-rule 後台`）。
+後台資料建議放在這個 Google Drive 資料夾（可直接在此資料夾建立）：
+👉 https://drive.google.com/drive/folders/1ksexf0n1VsIbtYOzI5XELP8wEbwbsaXB?usp=drive_link
+
+一鍵建立（直接在該資料夾開新試算表）：
+👉 https://docs.google.com/spreadsheets/create?folder=1ksexf0n1VsIbtYOzI5XELP8wEbwbsaXB
+
+1. 點上面連結 → 命名為 `1111-rule 後台`（會自動落在該資料夾）
 2. 選單 **擴充功能 → Apps Script**。
 3. 刪掉預設的 `myFunction`，把 `Code.gs` 全部內容貼上。
 4. 按 💾 儲存（專案名稱可改為 `1111-rule-backend`）。
@@ -126,6 +132,7 @@ Apps Script → **專案設定 → 指令碼屬性 → 新增指令碼屬性**�
 之後每天 08:00（Asia/Taipei）會自動把：
 - 當日填報摘要（成員 + 任務）
 - 最新 3 筆鋰電市場情報
+- **產業新聞**：透過 Google News 自動聚合 CNN / BBC / UDN / Digitimes 等來源的鋰電池、儲能、BESS 相關頭條（不需手動貼連結）
 
 推送到 LINE。
 
