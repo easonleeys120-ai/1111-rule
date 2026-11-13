@@ -197,7 +197,8 @@ function onOpen() {
       .addItem('1. 初始化工作表', 'setup')
       .addItem('2. 設定每日 08:00 LINE 推播', 'setupDailyPush')
       .addItem('3. 顯示 LINE Webhook 網址', 'showWebhookInfo')
-      .addItem('4. 顯示部署設定', 'showDeployInfo')
+      .addItem('4. 測試新聞抓取', 'testNewsFetch')
+      .addItem('5. 顯示部署設定', 'showDeployInfo')
       .addToUi();
   } catch (err) {
     Logger.log(err);
@@ -531,20 +532,77 @@ function dailyPush() {
     text += '（尚無報告）\n';
   }
 
-  text += '\\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等，點連結可開啟）\\n';
+  text += '\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等，點連結可開啟）\n';
   if (aiSummary) {
-    text += aiSummary + '\\n\\n';
+    text += aiSummary + '\n\n';
   }
   if (news.length) {
-    news.forEach(function (n) {
-      text += '• ' + n.title + (n.source ? '  [' + n.source + ']' : '') + '\\n';
-      if (n.link) text += n.link + '\\n';
+    news.slice(0, 5).forEach(function (n) {
+      text += '• ' + n.title + (n.source ? '  [' + n.source + ']' : '') + '\n';
+      if (n.link) text += n.link + '\n';
     });
   } else {
-    text += '（暫無新聞）\\n';
+    text += '（暫無新聞）\n';
   }
 
   text += '\n後台試算表：' + getSpreadsheet_().getUrl();
+
+  // 組成 LINE 訊息：文字 + 新聞 Flex Message（按鈕可開啟）
+  const messages = [];
+  messages.push({ type: 'text', text: text });
+
+  // 新聞用 Flex Message 附按鈕，確保連結可開啟
+  if (news.length) {
+    const newsContents = news.slice(0, 5).map(function (n) {
+      return {
+        type: 'box',
+        layout: 'vertical',
+        margin: 'md',
+        contents: [
+          {
+            type: 'text',
+            text: n.title + (n.source ? '  [' + n.source + ']' : ''),
+            wrap: true,
+            size: 'sm',
+            weight: 'bold',
+            color: '#111111'
+          },
+          {
+            type: 'button',
+            style: 'link',
+            height: 'sm',
+            action: { type: 'uri', label: '開啟新聞 ➔', uri: n.link }
+          }
+        ]
+      };
+    });
+
+    messages.push({
+      type: 'flex',
+      altText: '產業新聞（' + news.length + ' 則）',
+      contents: {
+        type: 'bubble',
+        size: 'giga',
+        header: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            { type: 'text', text: '📰 產業新聞', weight: 'bold', size: 'md', color: '#ffffff' },
+            { type: 'text', text: 'CNN / BBC / UDN / Digitimes 等', size: 'xs', color: '#ffffff', margin: 'sm' }
+          ],
+          backgroundColor: '#1e3a5f',
+          paddingAll: '12px'
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: newsContents,
+          spacing: 'sm',
+          paddingAll: '12px'
+        }
+      }
+    });
+  }
 
   recipients.forEach(function (to) {
     try {
@@ -554,10 +612,10 @@ function dailyPush() {
           'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json'
         },
-        payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text }] }),
+        payload: JSON.stringify({ to: to, messages: messages }),
         muteHttpExceptions: true
       });
-      Logger.log('push ' + to + ' => ' + res.getResponseCode());
+      Logger.log('push ' + to + ' => ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 200));
     } catch (e) {
       Logger.log('push failed for ' + to + ': ' + e);
     }
@@ -618,6 +676,18 @@ function seedSampleData() {
     SpreadsheetApp.getUi().alert('已填入範例資料：每日提醒 4 筆、會議紀錄 3 筆、市場情報 3 筆');
   } catch (e) {
     Logger.log('seed done');
+  }
+}
+
+function testNewsFetch() {
+  const news = fetchNews_('test', 8);
+  Logger.log('=== 新聞抓取測試：' + news.length + ' 則 ===');
+  news.forEach(function (n, i) {
+    Logger.log((i + 1) + '. ' + n.title + ' [' + n.source + ']');
+    Logger.log('   ' + n.link);
+  });
+  if (news.length === 0) {
+    Logger.log('沒有抓到新聞。若已設定 GEMINI_API_KEY，檢查 API key 是否有效。');
   }
 }
 
