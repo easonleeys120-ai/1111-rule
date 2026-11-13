@@ -222,6 +222,35 @@
       overflow-y: auto;
     }
 
+    /* 可點選的模組卡片（目錄頁三大項目） */
+    .card-link {
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .card-link::after {
+      content: '查看模組 ➔';
+      margin-top: 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+      opacity: 0.7;
+    }
+
+    .card-link:hover,
+    .card-link:focus-visible {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 32px rgba(56, 189, 248, 0.22);
+      outline: none;
+    }
+
+    .card-link:hover::after,
+    .card-link:focus-visible::after {
+      opacity: 1;
+    }
+
     /* 內嵌互動式展示台（Demo）樣式 */
     .interactive-box {
       background: rgba(15, 23, 42, 0.7);
@@ -419,22 +448,12 @@
   <!-- 簡報主體內容 -->
   <main>
 
-    <!-- Slide 1: 封面 -->
+    <!-- 目錄與架構總覽（第一頁） -->
     <div class="slide active">
-      <div class="slide-tag">Marketing Ops & Intelligence Platform</div>
-      <h1>行銷團隊營運後台標準化規範<br>與鋰電池市場智能分析系統</h1>
-      <p class="subtitle">整合「白名單授權之每日提醒」、「結構化會議紀錄知識庫」與「鋰電池新興市場情報中心」，具備完整前端填報與後台持久化記錄架構，驅動高敏捷團隊作戰。</p>
-      <div style="display: flex; gap: 12px;">
-        <button class="btn btn-download" style="padding: 10px 22px; font-size: 0.95rem;" onclick="nextSlide()">開始簡報展示 ➔</button>
-      </div>
-    </div>
-
-    <!-- Slide 2: 目錄與架構總覽 -->
-    <div class="slide">
       <div class="slide-tag">System Architecture</div>
       <h2>全系統三大支柱與後台資料流架構</h2>
       <div class="grid-3">
-        <div class="card" onclick="goToSlide(2)" style="cursor: pointer;">
+        <div class="card card-link" role="button" tabindex="0" aria-label="前往每日提醒模組" onclick="goToSlide(1)">
           <div class="card-header">01. 每人每日提醒事項</div>
           <div class="card-content">
             <p><strong>白名單驗證與個人填寫閉環：</strong></p>
@@ -446,7 +465,7 @@
           </div>
         </div>
 
-        <div class="card" onclick="goToSlide(4)" style="cursor: pointer;">
+        <div class="card card-link" role="button" tabindex="0" aria-label="前往會議紀錄模組" onclick="goToSlide(3)">
           <div class="card-header">02. 團隊會議紀錄系統</div>
           <div class="card-content">
             <p><strong>高效決策與待辦追蹤中心：</strong></p>
@@ -458,7 +477,7 @@
           </div>
         </div>
 
-        <div class="card" onclick="goToSlide(6)" style="cursor: pointer;">
+        <div class="card card-link" role="button" tabindex="0" aria-label="前往市場分析模組" onclick="goToSlide(5)">
           <div class="card-header">03. 鋰電池新市場分析</div>
           <div class="card-content">
             <p><strong>產業情報與商機報告庫：</strong></p>
@@ -813,7 +832,7 @@
 
   <!-- 底部導覽列 -->
   <footer>
-    <div class="slide-counter" id="slideCounter">1 / 10</div>
+    <div class="slide-counter" id="slideCounter">1 / 9</div>
     <div class="nav-buttons">
       <button class="btn" onclick="prevSlide()">◀ 上一頁</button>
       <button class="btn btn-download" onclick="nextSlide()">下一頁 ▶</button>
@@ -1078,6 +1097,17 @@
         updateSlide();
       }
     }
+
+    // 目錄卡片：支援 Enter / Space 點選
+    document.querySelectorAll('.card-link').forEach(card => {
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          card.click();
+        }
+      });
+    });
 
     // 鍵盤監聽
     document.addEventListener('keydown', (e) => {
