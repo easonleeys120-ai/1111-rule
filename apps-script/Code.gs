@@ -96,6 +96,18 @@ function doGet(e) {
       if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
       return json_({ ok: true, sheet: key, rows: listRecords_(key, params.limit) });
     }
+    if (action === 'search') {
+      const key = String(params.sheet || '');
+      if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
+      const q = String(params.q || '').toLowerCase().trim();
+      const rows = listRecords_(key, 500);
+      const filtered = q ? rows.filter(function (r) {
+        return Object.keys(r).some(function (k) {
+          return String(r[k] == null ? '' : r[k]).toLowerCase().indexOf(q) >= 0;
+        });
+      }) : rows;
+      return json_({ ok: true, sheet: key, rows: filtered.slice(0, 100) });
+    }
     return json_({ ok: false, error: 'UNKNOWN_ACTION' });
   } catch (err) {
     return json_({ ok: false, error: message_(err) });
@@ -125,6 +137,18 @@ function doPost(e) {
       if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
       if (!body.id) return json_({ ok: false, error: 'MISSING_ID' });
       return json_({ ok: true, sheet: key, record: updateRecord_(key, String(body.id), body.payload || {}) });
+    }
+    if (action === 'search') {
+      const key = String(body.sheet || '');
+      if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
+      const q = String(body.q || '').toLowerCase().trim();
+      const rows = listRecords_(key, 500);
+      const filtered = q ? rows.filter(function (r) {
+        return Object.keys(r).some(function (k) {
+          return String(r[k] == null ? '' : r[k]).toLowerCase().indexOf(q) >= 0;
+        });
+      }) : rows;
+      return json_({ ok: true, sheet: key, rows: filtered.slice(0, 100) });
     }
     return json_({ ok: false, error: 'UNKNOWN_ACTION' });
   } catch (err) {
@@ -297,31 +321,110 @@ function nextLogId_(sheet, def, now) {
 /* ============================ 08:00 每日 LINE 推播 ============================ */
 
 function fetchNews_(query, maxItems) {
-  maxItems = maxItems || 6;
-  const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(query) +
-    '&hl=zh-TW&gl=TW&ceid=TW:zh-Hant';
+  maxItems = maxItems || 8;
+  const props = PropertiesService.getScriptProperties();
+  const geminiKey = props.getProperty('GEMINI_API_KEY');
+
+  // 優先：用 Gemini + Google Search grounding 取得真實可開啟連結
+  if (geminiKey) {
+    const geminiNews = fetchNewsWithGemini_(geminiKey, maxItems);
+    if (geminiNews.length > 0) return geminiNews;
+  }
+
+  // 備援：Google News RSS（聚合 CNN/BBC/UDN/Digitimes 等，連結可開啟）
+  return fetchNewsFromGoogleNews_(maxItems);
+}
+
+function fetchNewsWithGemini_(apiKey, maxItems) {
   const items = [];
+  const seen = {};
   try {
-    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
-    if (res.getResponseCode() !== 200) return items;
-    const doc = XmlService.parse(res.getContentText());
-    const channel = doc.getRootElement().getChild('channel');
-    if (!channel) return items;
-    const rssItems = channel.getChildren('item');
-    for (let i = 0; i < rssItems.length && items.length < maxItems; i++) {
-      const it = rssItems[i];
-      const title = textOf_(it, 'title');
-      const link = textOf_(it, 'link');
-      const pubDate = textOf_(it, 'pubDate');
-      const source = textOf_(it, 'source');
-      if (!title) continue;
-      // 去重（相同標題）
-      if (items.some(function (x) { return x.title === title; })) continue;
-      items.push({ title: title, link: link, pubDate: pubDate, source: source });
+    const prompt = '請搜尋最近 3 天關於「鋰電池、儲能系統、BESS、lithium battery」的最新新聞，' +
+      '優先 CNN、BBC、UDN、Digitimes 等來源。輸出 JSON 陣列，每項含 title（標題）、url（原文連結）、source（媒體名稱），' +
+      '共 ' + maxItems + ' 筆，不要其他文字。';
+
+    const res = UrlFetchApp.fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey,
+      {
+        method: 'post',
+        contentType: 'application/json',
+        payload: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          tools: [{ google_search: {} }]
+        }),
+        muteHttpExceptions: true
+      }
+    );
+    if (res.getResponseCode() !== 200) {
+      Logger.log('Gemini news failed: ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 200));
+      return items;
+    }
+    const j = JSON.parse(res.getContentText());
+    const text = j && j.candidates && j.candidates[0] && j.candidates[0].content &&
+      j.candidates[0].content.parts && j.candidates[0].content.parts[0] && j.candidates[0].content.parts[0].text;
+    if (text) {
+      // 嘗試解析 JSON
+      const jsonMatch = String(text).match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          parsed.forEach(function (n) {
+            if (!n || !n.title) return;
+            const key = String(n.title).slice(0, 40);
+            if (seen[key]) return;
+            seen[key] = true;
+            items.push({
+              title: String(n.title),
+              link: String(n.url || ''),
+              source: String(n.source || 'Gemini')
+            });
+          });
+        } catch (e) { Logger.log('Gemini JSON parse failed: ' + e); }
+      }
+    }
+    // 也從 groundingMetadata 取得來源連結（備援）
+    const chunks = j && j.candidates && j.candidates[0] && j.candidates[0].groundingMetadata &&
+      j.candidates[0].groundingMetadata.groundingChunks;
+    if (chunks && items.length === 0) {
+      chunks.forEach(function (c) {
+        if (c.web && c.web.uri) {
+          items.push({ title: c.web.title || c.web.uri, link: c.web.uri, source: 'Gemini' });
+        }
+      });
     }
   } catch (e) {
-    Logger.log('fetchNews_ failed: ' + e);
+    Logger.log('fetchNewsWithGemini_ failed: ' + e);
   }
+  return items.slice(0, maxItems);
+}
+
+function fetchNewsFromGoogleNews_(maxItems) {
+  const items = [];
+  const seen = {};
+  try {
+    const res = UrlFetchApp.fetch(
+      'https://news.google.com/rss/search?q=' + encodeURIComponent('鋰電池 OR lithium battery OR 儲能 OR BESS') +
+      '&hl=zh-TW&gl=TW&ceid=TW:zh-Hant',
+      { muteHttpExceptions: true }
+    );
+    if (res.getResponseCode() === 200) {
+      const doc = XmlService.parse(res.getContentText());
+      const channel = doc.getRootElement().getChild('channel');
+      if (channel) {
+        const rssItems = channel.getChildren('item');
+        for (let i = 0; i < rssItems.length && items.length < maxItems; i++) {
+          const it = rssItems[i];
+          const title = textOf_(it, 'title');
+          const link = textOf_(it, 'link');
+          if (!title || !link) continue;
+          const key = title.slice(0, 40);
+          if (seen[key]) continue;
+          seen[key] = true;
+          items.push({ title: title, link: link, source: textOf_(it, 'source') || 'Google News' });
+        }
+      }
+    }
+  } catch (e) { Logger.log('fetchNewsFromGoogleNews_ failed: ' + e); }
   return items;
 }
 
@@ -428,17 +531,17 @@ function dailyPush() {
     text += '（尚無報告）\n';
   }
 
-  text += '\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等，點連結可開啟）\n';
+  text += '\\n📰 產業新聞（CNN / BBC / UDN / Digitimes 等，點連結可開啟）\\n';
   if (aiSummary) {
-    text += aiSummary + '\n\n';
+    text += aiSummary + '\\n\\n';
   }
   if (news.length) {
     news.forEach(function (n) {
-      text += '• ' + n.title + (n.source ? '  [' + n.source + ']' : '') + '\n';
-      if (n.link) text += '  ' + n.link + '\n';
+      text += '• ' + n.title + (n.source ? '  [' + n.source + ']' : '') + '\\n';
+      if (n.link) text += n.link + '\\n';
     });
   } else {
-    text += '（暫無新聞）\n';
+    text += '（暫無新聞）\\n';
   }
 
   text += '\n後台試算表：' + getSpreadsheet_().getUrl();

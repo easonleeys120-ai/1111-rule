@@ -271,6 +271,32 @@
       flex: 1;
     }
 
+    .global-search {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      outline: none;
+      width: 200px;
+      transition: border-color 0.15s ease, width 0.15s ease;
+    }
+
+    .global-search:focus {
+      border-color: var(--accent);
+      width: 260px;
+    }
+
+    @media (max-width: 768px) {
+      .global-search {
+        width: 100%;
+      }
+      .global-search:focus {
+        width: 100%;
+      }
+    }
+
     /* 表格與資料卡 */
     .table-container {
       width: 100%;
@@ -501,6 +527,7 @@
       <span>🔋</span> 行銷團隊三大營運中樞與鋰電智能推播平台
     </div>
     <div class="controls-top">
+      <input type="search" id="globalSearch" class="global-search" placeholder="🔍 全站搜尋..." oninput="globalSearch(this.value)">
       <button class="btn" onclick="toggleFullScreen()">⛶ 全螢幕 (F)</button>
       <button class="btn btn-download" onclick="downloadSelf()">📥 下載本簡報 HTML</button>
     </div>
@@ -1068,6 +1095,16 @@
         item.cat.toLowerCase().includes(q) || item.summary.toLowerCase().includes(q)
       );
       renderReportLogs(filtered);
+    }
+
+    function globalSearch(q) {
+      q = (q || '').trim();
+      const dailyInput = document.getElementById('dailySearchInput');
+      const meetInput = document.getElementById('meetSearchInput');
+      const reportInput = document.getElementById('reportSearchInput');
+      if (dailyInput) { dailyInput.value = q; filterDailyLogs(); }
+      if (meetInput) { meetInput.value = q; filterMeetingLogs(); }
+      if (reportInput) { reportInput.value = q; filterReportLogs(); }
     }
 
     // ====================== 一鍵下載為完整 HTML ======================
