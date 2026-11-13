@@ -31,7 +31,7 @@ const SHEET_DEFS = {
       ];
     },
     record: function (row) {
-      return { time: row[0], log_id: row[1], user: row[2], task: row[3], status: row[4] };
+      return { time: row[0], log_id: row[1], user: row[2], task: row[3], status: row[4], iso: row[5] };
     },
     defaultStatus: 'Submitted_On_Time'
   },
@@ -53,7 +53,7 @@ const SHEET_DEFS = {
       ];
     },
     record: function (row) {
-      return { time: row[0], log_id: row[1], title: row[2], decision: row[3], owner: row[4], status: row[5] };
+      return { time: row[0], log_id: row[1], title: row[2], decision: row[3], owner: row[4], status: row[5], iso: row[6] };
     },
     defaultStatus: 'Open'
   },
@@ -74,7 +74,7 @@ const SHEET_DEFS = {
       ];
     },
     record: function (row) {
-      return { time: row[0], log_id: row[1], title: row[2], category: row[3], summary: row[4] };
+      return { time: row[0], log_id: row[1], title: row[2], category: row[3], summary: row[4], iso: row[5] };
     },
     defaultStatus: ''
   }
@@ -108,12 +108,18 @@ function doPost(e) {
     verifyToken_(body.token);
 
     const action = body.action || 'submit';
-    if (action !== 'submit') return json_({ ok: false, error: 'UNKNOWN_ACTION' });
-
-    const key = String(body.sheet || '');
-    if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
-
-    return json_({ ok: true, sheet: key, record: appendRecord_(key, body.payload || {}) });
+    if (action === 'submit') {
+      const key = String(body.sheet || '');
+      if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
+      return json_({ ok: true, sheet: key, record: appendRecord_(key, body.payload || {}) });
+    }
+    if (action === 'update') {
+      const key = String(body.sheet || '');
+      if (!SHEET_DEFS[key]) return json_({ ok: false, error: 'UNKNOWN_SHEET' });
+      if (!body.id) return json_({ ok: false, error: 'MISSING_ID' });
+      return json_({ ok: true, sheet: key, record: updateRecord_(key, String(body.id), body.payload || {}) });
+    }
+    return json_({ ok: false, error: 'UNKNOWN_ACTION' });
   } catch (err) {
     return json_({ ok: false, error: message_(err) });
   }
@@ -139,7 +145,8 @@ function onOpen() {
     SpreadsheetApp.getUi()
       .createMenu('⚙️ 1111-rule 後台')
       .addItem('1. 初始化工作表', 'setup')
-      .addItem('2. 顯示部署設定', 'showDeployInfo')
+      .addItem('2. 設定每日 08:00 LINE 推播', 'setupDailyPush')
+      .addItem('3. 顯示部署設定', 'showDeployInfo')
       .addToUi();
   } catch (err) {
     Logger.log(err);
@@ -182,6 +189,38 @@ function appendRecord_(key, payload) {
   }
 }
 
+function updateRecord_(key, id, payload) {
+  const def = SHEET_DEFS[key];
+  const sheet = ensureSheet_(key);
+  const lock = LockService.getScriptLock();
+
+  lock.waitLock(10000);
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error('NOT_FOUND');
+
+    const ids = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    let targetRow = -1;
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === id) { targetRow = i + 2; break; }
+    }
+    if (targetRow < 0) throw new Error('NOT_FOUND');
+
+    const now = new Date();
+    const base = {
+      time: Utilities.formatDate(now, TZ, 'HH:mm:ss'),
+      iso: Utilities.formatDate(now, TZ, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+      log_id: id,
+      status: def.defaultStatus
+    };
+    const values = def.write(payload, base);
+    sheet.getRange(targetRow, 1, 1, values.length).setValues([values]);
+    return def.record(values);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function listRecords_(key, limit) {
   const def = SHEET_DEFS[key];
   const sheet = ensureSheet_(key);
@@ -209,6 +248,83 @@ function nextLogId_(sheet, def, now) {
     }
   }
   return prefix + String(seq + 1).padStart(3, '0');
+}
+
+/* ============================ 08:00 每日 LINE 推播 ============================ */
+
+function dailyPush() {
+  const props = PropertiesService.getScriptProperties();
+  const token = props.getProperty('LINE_CHANNEL_TOKEN');
+  const recipientsRaw = props.getProperty('LINE_RECIPIENT_IDS') || '';
+  const recipients = recipientsRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+
+  if (!token || !recipients.length) {
+    Logger.log('dailyPush skipped: LINE_CHANNEL_TOKEN / LINE_RECIPIENT_IDS not set');
+    return;
+  }
+
+  const today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  const dailyRows = listRecords_('daily', 100).filter(function (r) {
+    return String(r.iso || '').slice(0, 10) === today;
+  });
+  const reportRows = listRecords_('report', 5);
+
+  let text = '【行銷團隊每日晨報】' + today + '\n\n';
+  text += '📋 今日提醒（' + dailyRows.length + ' 筆）\n';
+  if (dailyRows.length) {
+    dailyRows.slice(0, 12).forEach(function (r) {
+      text += '• ' + (r.user || '') + '：' + (r.task || '') + '\n';
+    });
+  } else {
+    text += '（尚無人填報）\n';
+  }
+
+  text += '\n📊 最新鋰電市場情報\n';
+  if (reportRows.length) {
+    reportRows.slice(0, 3).forEach(function (r) {
+      text += '• ' + (r.title || '') + '（' + (r.category || '') + '）\n';
+      if (r.summary) text += '  ' + r.summary + '\n';
+    });
+  } else {
+    text += '（尚無報告）\n';
+  }
+
+  text += '\n後台試算表：' + getSpreadsheet_().getUrl();
+
+  recipients.forEach(function (to) {
+    try {
+      const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'post',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text }] }),
+        muteHttpExceptions: true
+      });
+      Logger.log('push ' + to + ' => ' + res.getResponseCode());
+    } catch (e) {
+      Logger.log('push failed for ' + to + ': ' + e);
+    }
+  });
+}
+
+function setupDailyPush() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyPush') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('dailyPush')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .nearMinute(0)
+    .inTimezone(TZ)
+    .create();
+  try {
+    SpreadsheetApp.getUi().alert('已設定每日 08:00 (' + TZ + ') 自動推播至 LINE');
+  } catch (e) {
+    Logger.log('trigger created');
+  }
 }
 
 /* ============================ 工具函式 ============================ */
