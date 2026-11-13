@@ -359,22 +359,12 @@
   <!-- 簡報主舞台 -->
   <main>
 
-    <!-- Slide 1: 封面 -->
+    <!-- Slide 1: 三大系統總覽 -->
     <div class="slide active">
-      <div class="slide-tag">Marketing Ops & Intelligence Platform</div>
-      <h1>行銷營運後台三大整合系統<br>與鋰電池市場 08:00 智能推播中心</h1>
-      <p class="subtitle">為新能源行銷團隊打造：1) 白名單每日提醒後台 2) 團隊決策會議紀錄檢索庫 3) 鋰電池市場即時報告與每日晨間 08:00 自動推播引擎。全系統內建後台，隨時精準調閱資訊。</p>
-      <div style="display: flex; gap: 12px;">
-        <button class="btn btn-download" style="padding: 10px 22px; font-size: 0.95rem;" onclick="nextSlide()">開始系統檢視 ➔</button>
-      </div>
-    </div>
-
-    <!-- Slide 2: 三大系統總覽 -->
-    <div class="slide">
       <div class="slide-tag">Architecture Overview</div>
       <h2>三大模組與中央後台檢索資料流架構</h2>
       <div class="grid-3">
-        <div class="card" onclick="goToSlide(2)" style="cursor: pointer;">
+        <div class="card" onclick="goToSlide(1)" style="cursor: pointer;">
           <div class="card-header">
             <span>01</span> 白名單每日提醒系統
           </div>
@@ -388,7 +378,7 @@
           </div>
         </div>
 
-        <div class="card" onclick="goToSlide(4)" style="cursor: pointer;">
+        <div class="card" onclick="goToSlide(3)" style="cursor: pointer;">
           <div class="card-header">
             <span>02</span> 會議紀錄知識庫
           </div>
@@ -402,7 +392,7 @@
           </div>
         </div>
 
-        <div class="card" onclick="goToSlide(6)" style="cursor: pointer;">
+        <div class="card" onclick="goToSlide(5)" style="cursor: pointer;">
           <div class="card-header">
             <span>03</span> 鋰電市場 08:00 晨報推播
           </div>
@@ -737,7 +727,7 @@
 
   <!-- 底部導覽欄 -->
   <footer>
-    <div class="slide-counter" id="slideCounter">1 / 10</div>
+    <div class="slide-counter" id="slideCounter">1 / 9</div>
     <div class="nav-buttons">
       <button class="btn" onclick="prevSlide()">◀ 上一頁</button>
       <button class="btn btn-download" onclick="nextSlide()">下一頁 ▶</button>
